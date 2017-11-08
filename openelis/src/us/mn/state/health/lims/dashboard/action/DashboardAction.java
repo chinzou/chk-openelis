@@ -39,22 +39,12 @@ import java.util.Map;
 
 public class DashboardAction extends BaseAction {
     private OrderListDAO orderListDAO = new OrderListDAOImpl();
-    public static Map<String,Long> priorityMap = new HashMap<String,Long>();
     public DashboardAction() {
     }
 
     @Override
     protected ActionForward performAction(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
         DynaActionForm dynaForm = (DynaActionForm) form;
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(new FileReader("/var/www/bahmni_config/openelis/priority.json"));
-        JSONObject jsonObject = (JSONObject) obj;
-        JSONObject labPriority = (JSONObject) jsonObject.get("labPriority");
-        Long name = (Long) (labPriority).get("OPD");
-
-        for(Object key : labPriority.keySet()){
-            priorityMap.put((String)key,(Long)labPriority.get((String)key));
-        }
 
         OrderComparator orderComparator = new OrderComparator();
         List allToday = orderListDAO.getAllToday();

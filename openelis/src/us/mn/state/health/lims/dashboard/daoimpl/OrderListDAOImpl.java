@@ -22,9 +22,9 @@ import org.apache.log4j.Logger;
 import us.mn.state.health.lims.common.exception.LIMSRuntimeException;
 import us.mn.state.health.lims.common.util.DateUtil;
 import us.mn.state.health.lims.dashboard.dao.OrderListDAO;
+import us.mn.state.health.lims.dashboard.util.OrderComparator;
 import us.mn.state.health.lims.dashboard.valueholder.Order;
 import us.mn.state.health.lims.hibernate.HibernateUtil;
-import us.mn.state.health.lims.dashboard.action.DashboardAction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -215,8 +215,8 @@ public class OrderListDAOImpl implements OrderListDAO {
             String commentToShow="";
             Long priorityValue=Long.MAX_VALUE;
             for(String comment: comments){
-                if(null!=DashboardAction.priorityMap.get(comment) && DashboardAction.priorityMap.get(comment) < priorityValue ){
-                    priorityValue=DashboardAction.priorityMap.get(comment);
+                if(null!= OrderComparator.priorityMap.get(comment) && OrderComparator.priorityMap.get(comment) < priorityValue ){
+                    priorityValue=OrderComparator.priorityMap.get(comment);
                     commentToShow=comment;
                 }
             }
