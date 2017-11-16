@@ -1,8 +1,8 @@
 package us.mn.state.health.lims.dashboard.util;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import us.mn.state.health.lims.dashboard.action.DashboardAction;
 import us.mn.state.health.lims.dashboard.valueholder.Order;
 
 import java.io.File;
@@ -12,12 +12,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+
 /**
  * Created by dreddy on 11/2/17.
  */
 public class OrderComparator implements Comparator<Order> {
     public static Map<String, Long> priorityMap = new HashMap<>();
     private final String CONFIG_PATH = "/var/www/bahmni_config/openelis/app.json";
+    private static Logger logger = Logger.getLogger(OrderComparator.class);
 
     public OrderComparator() throws Exception {
         priorityMap = new HashMap<>();
@@ -31,7 +33,11 @@ public class OrderComparator implements Comparator<Order> {
             JSONObject labPriority = (JSONObject) jsonObject.get("labPriority");
             if(labPriority!=null) {
                 for (Object key : labPriority.keySet()) {
-                    priorityMap.put((String) key, (Long) labPriority.get((String) key));
+                    try {
+                        priorityMap.put((String) key, (Long) labPriority.get(key));
+                    }catch (ClassCastException ex){
+                        logger.error("Unable to parse config value"+labPriority.get(key),ex);
+                    }
                 }
             }
         }
