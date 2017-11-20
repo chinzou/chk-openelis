@@ -184,7 +184,7 @@
                         <rightPen lineWidth="0.5"/>
                     </box>
                     <textElement verticalAlignment="Middle"/>
-                    <text><![CDATA[ CHK numbero]]></text>
+                    <text><![CDATA[ ID Patient]]></text>
                 </staticText>
 				<textField isBlankWhenNull="true">
 					<reportElement x="100" y="80" width="80" height="14"></reportElement>
