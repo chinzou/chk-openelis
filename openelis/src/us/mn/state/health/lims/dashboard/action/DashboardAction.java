@@ -21,18 +21,24 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.DynaActionForm;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.JSONObject;
+import java.io.FileReader;
 import org.bahmni.feed.openelis.ObjectMapperRepository;
 import us.mn.state.health.lims.common.action.BaseAction;
 import us.mn.state.health.lims.dashboard.dao.OrderListDAO;
 import us.mn.state.health.lims.dashboard.daoimpl.OrderListDAOImpl;
-
+import us.mn.state.health.lims.dashboard.util.OrderComparator;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DashboardAction extends BaseAction {
     private OrderListDAO orderListDAO = new OrderListDAOImpl();
-
     public DashboardAction() {
     }
 
@@ -40,10 +46,21 @@ public class DashboardAction extends BaseAction {
     protected ActionForward performAction(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
         DynaActionForm dynaForm = (DynaActionForm) form;
 
-        String escapedTodayOrderListJson = asJson(orderListDAO.getAllToday());
-        String escapedTodaySampleNotCollectedListJson = asJson(orderListDAO.getAllSampleNotCollectedToday());
-        String escapedBacklogSampleNotCollectedListJson = asJson(orderListDAO.getAllSampleNotCollectedPendingBeforeToday());
-        String escapedBacklogOrderListJson = asJson(orderListDAO.getAllPendingBeforeToday());
+        OrderComparator orderComparator = new OrderComparator();
+        List allToday = orderListDAO.getAllToday();
+        List pendingBeforeToday = orderListDAO.getAllPendingBeforeToday();
+        List allSampleNotCollectedToday = orderListDAO.getAllSampleNotCollectedToday();
+        List allSampleNotCollectedPendingBeforeToday = orderListDAO.getAllSampleNotCollectedPendingBeforeToday();
+
+        Collections.sort(allToday, orderComparator );
+        Collections.sort(pendingBeforeToday,orderComparator);
+        Collections.sort(allSampleNotCollectedPendingBeforeToday,orderComparator);
+        Collections.sort(allSampleNotCollectedToday,orderComparator);
+
+        String escapedTodayOrderListJson = asJson(allToday);
+        String escapedTodaySampleNotCollectedListJson = asJson(allSampleNotCollectedToday);
+        String escapedBacklogSampleNotCollectedListJson = asJson(allSampleNotCollectedPendingBeforeToday);
+        String escapedBacklogOrderListJson = asJson(pendingBeforeToday);
 
         dynaForm.set("todayOrderList", escapedTodayOrderListJson);
         dynaForm.set("todaySampleNotCollectedList", escapedTodaySampleNotCollectedListJson);

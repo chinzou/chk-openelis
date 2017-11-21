@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import us.mn.state.health.lims.common.exception.LIMSRuntimeException;
 import us.mn.state.health.lims.common.util.DateUtil;
 import us.mn.state.health.lims.dashboard.dao.OrderListDAO;
+import us.mn.state.health.lims.dashboard.util.OrderComparator;
 import us.mn.state.health.lims.dashboard.valueholder.Order;
 import us.mn.state.health.lims.hibernate.HibernateUtil;
 
@@ -57,6 +58,7 @@ public class OrderListDAOImpl implements OrderListDAO {
     @Override
     public List<Order> getAllToday() {
         List<Order> orderList = new ArrayList<>();
+
         String condition = "sample.accession_number is not null and analysis.status_id IN (" + getAllNonReferredAnalysisStatus() + ") ";
         String sqlForAllTestsToday = createSqlStringForTodayOrders(condition, "sample.accession_number");
         PreparedStatement preparedStatement = null;
@@ -210,7 +212,15 @@ public class OrderListDAOImpl implements OrderListDAO {
         String analysis_comments = accessionResultSet.getString("analysis_comments");
         if(StringUtils.isNotBlank(analysis_comments)) {
             String[] comments = analysis_comments.split(COMMENT_SEPARATOR);
-            String[] unique = new HashSet<String>(Arrays.asList(comments)).toArray(new String[0]);
+            String commentToShow="";
+            Long priorityValue=Long.MAX_VALUE;
+            for(String comment: comments){
+                if(null!= OrderComparator.priorityMap.get(comment) && OrderComparator.priorityMap.get(comment) < priorityValue ){
+                    priorityValue=OrderComparator.priorityMap.get(comment);
+                    commentToShow=comment;
+                }
+            }
+            String[] unique = new HashSet<String>(Arrays.asList(commentToShow)).toArray(new String[0]);
             return StringUtils.join(unique, ",");
         }else{
             return "";
