@@ -370,7 +370,7 @@
 						<rightPen lineWidth="0.0"/>
 					</box>
 					<textElement verticalAlignment="Middle" textAlignment="Right" />
-					<textFieldExpression class="java.lang.String"><![CDATA["Accession Number: " + $F{accessionNumber}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA["No d'échantillon: " + $F{accessionNumber}]]></textFieldExpression>
 				</textField>
             <staticText>
                 <reportElement mode="Opaque" x="0" y="19" width="163" height="14" backcolor="#CCCCCC"/>
@@ -394,7 +394,7 @@
                         <rightPen lineWidth="0.5"/>
                     </box>
                     <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                    <text><![CDATA[Unit]]></text>
+                    <text><![CDATA[Unité]]></text>
                 </staticText>
             <staticText>
                 <reportElement mode="Opaque" x="163" y="19" width="63" height="14" backcolor="#CCCCCC"/>
@@ -418,7 +418,7 @@
 					<rightPen lineWidth="0.5"/>
 				</box>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <text><![CDATA[Alert]]></text>
+                <text><![CDATA[Alerte]]></text>
             </staticText>
             <staticText>
                 <reportElement mode="Opaque" x="337" y="19" width="128" height="14" backcolor="#CCCCCC"/>
@@ -430,7 +430,7 @@
 					<rightPen lineWidth="0.5"/>
 				</box>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <text><![CDATA[Valid Range]]></text>
+                <text><![CDATA[Limites acceptables]]></text>
             </staticText>
 			</band>
 	</pageHeader>
