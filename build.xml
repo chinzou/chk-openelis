@@ -103,8 +103,8 @@
         <zip destfile="OpenElis.zip" basedir="../" includes="OpenElis**/**" excludes="**/.idea/**,*.iml,*.git*,**/dist/*,**/target/*,*.svn*,**/out/**,**/openelis/**,**/src/**,**/logs/**,**/junit/*,**/OpenElis.zip" />
     </target>
 
-    <target name="build" depends="clean, compile, resetDB, test, report, dist"/>
-    <target name="devbuild" depends="clean, compile, updateDB, test, report, dist"/>
+    <target name="build" depends="clean, compile, resetDB, test-only, report, dist"/>
+    <target name="devbuild" depends="clean, compile, updateDB, test-only, report, dist"/>
     <target name="useHaitiDB" depends="dropDB, initHaitiDB, updateHaitiDB, updateDB" />
 
     <target name="initHaitiDB">

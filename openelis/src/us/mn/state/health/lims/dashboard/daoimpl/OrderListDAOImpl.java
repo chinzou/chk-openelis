@@ -189,6 +189,7 @@ public class OrderListDAOImpl implements OrderListDAO {
 
     private Order createOrder(ResultSet accessionResultSet, boolean completed) throws SQLException {
         String comments = getUniqueComments(accessionResultSet);
+        String sectionNames = getUniqueSectionNames(accessionResultSet);
         return new Order(accessionResultSet.getString("accession_number"),
                             accessionResultSet.getString("uuid"),
                             accessionResultSet.getString("id"),
@@ -204,8 +205,19 @@ public class OrderListDAOImpl implements OrderListDAO {
                             accessionResultSet.getInt("total_test_count"),
                             accessionResultSet.getDate("collection_date"),
                             accessionResultSet.getDate("entered_date"),
-                            comments
+                            comments,
+                            sectionNames
         );
+    }
+
+    private String getUniqueSectionNames(ResultSet accessionResultSet) throws SQLException {
+        String sectionNames = accessionResultSet.getString("section_names");
+        return StringUtils.isNotBlank(sectionNames) ? getUniqueValueAsCSV(sectionNames.split(COMMENT_SEPARATOR)) : "";
+    }
+
+    private String getUniqueValueAsCSV(String[] holders) {
+        String[] unique = new HashSet<String>(Arrays.asList(holders)).toArray(new String[0]);
+        return StringUtils.join(unique, ",");
     }
 
     private String getUniqueComments(ResultSet accessionResultSet) throws SQLException {
@@ -267,6 +279,7 @@ public class OrderListDAOImpl implements OrderListDAO {
     private String createSqlStringForPendingOrders(String condition, String OrderBy) {
         return "SELECT \n" +
                 "sample.accession_number AS accession_number, \n" +
+                "string_agg(test_section.name, '" + COMMENT_SEPARATOR + "') AS section_names, \n" +
                 "sample.uuid AS uuid, \n" +
                 "sample.id AS id, \n" +
                 "sample.collection_date AS collection_date, \n" +
@@ -291,6 +304,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN sample_item ON sample_item.samp_id = sample.id \n" +
                 "INNER JOIN analysis ON analysis.sampitem_id = sample_item.id and analysis.status_id not in (" +  analysesReferredOrInFinalStatus() + ") and analysis.lastupdated < ?\n" +
                 "INNER JOIN test ON test.id = analysis.test_id\n" +
+                "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null\n" +
                 "WHERE "+condition+"\n" +
                 "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time\n" +
@@ -302,6 +316,7 @@ public class OrderListDAOImpl implements OrderListDAO {
         return "SELECT \n" +
                 "sample.accession_number AS accession_number, \n" +
                 "sample.uuid AS uuid, \n" +
+                "string_agg(test_section.name, '" + COMMENT_SEPARATOR + "') AS section_names, \n" +
                 "sample.id AS id, \n" +
                 "sample.collection_date AS collection_date, \n" +
                 "sample.entered_date AS entered_date, \n" +
@@ -335,6 +350,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN sample_item ON sample_item.samp_id = sample.id \n" +
                 "INNER JOIN analysis ON analysis.sampitem_id = sample_item.id \n" +
                 "INNER JOIN test ON test.id = analysis.test_id\n" +
+                "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null \n" +
                 "WHERE "+condition+"\n" +
                 "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, sample.lastupdated, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time \n" +
