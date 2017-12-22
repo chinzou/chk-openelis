@@ -8,18 +8,22 @@ import us.mn.state.health.lims.dashboard.valueholder.Order;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
-/**
- * Created by dreddy on 11/2/17.
- */
 public class OrderComparator implements Comparator<Order> {
-    public static Map<String, Long> priorityMap = new HashMap<>();
-    private final String CONFIG_PATH = "/var/www/bahmni_config/openelis/app.json";
+    private static Map<String, Long> priorityMap = new HashMap<>();
+    private static String CONFIG_PATH = "/var/www/bahmni_config/openelis/app.json";
     private static Logger logger = Logger.getLogger(OrderComparator.class);
+
+    public static Map<String, Long> getPriorityMap(){
+        return priorityMap;
+    }
+
+    protected static void setConfigPath(String configPath){
+        CONFIG_PATH = configPath;
+    }
 
     public OrderComparator() throws Exception {
         priorityMap = new HashMap<>();
@@ -31,12 +35,12 @@ public class OrderComparator implements Comparator<Order> {
             configReader.close();
             JSONObject jsonObject = (JSONObject) obj;
             JSONObject labPriority = (JSONObject) jsonObject.get("labPriority");
-            if(labPriority!=null) {
+            if (labPriority != null) {
                 for (Object key : labPriority.keySet()) {
                     try {
                         priorityMap.put((String) key, (Long) labPriority.get(key));
-                    }catch (ClassCastException ex){
-                        logger.error("Unable to parse config value"+labPriority.get(key),ex);
+                    } catch (ClassCastException ex) {
+                        logger.error("Unable to parse config value" + labPriority.get(key), ex);
                     }
                 }
             }
@@ -44,13 +48,31 @@ public class OrderComparator implements Comparator<Order> {
     }
 
     @Override
-    public int compare (Order o1, Order o2){
-        Long order1Priority = priorityMap.get(o1.getComments());
-        Long order2Priority = priorityMap.get(o2.getComments());
+    public int compare(Order order1, Order order2) {
+        int completionStatusDiff = compareCompletionStatus(order1, order2);
+        if (completionStatusDiff == 0) {
+            int priorityDiff = comparePriority(order1, order2);
+            return priorityDiff == 0 ? compareEnteredDate(order1, order2) : priorityDiff;
+        }
+        return completionStatusDiff;
+    }
+
+    private int compareCompletionStatus(Order order1, Order order2) {
+        return order1.getIsCompleted() == order2.getIsCompleted() ? 0 : order1.getIsCompleted() ? 1 : -1;
+    }
+
+    private int comparePriority(Order order1, Order order2) {
+        Long order1Priority = priorityMap.get(order1.getComments());
+        Long order2Priority = priorityMap.get(order2.getComments());
         order1Priority = order1Priority != null ? order1Priority : (int) Integer.MAX_VALUE;
         order2Priority = order2Priority != null ? order2Priority : (int) Integer.MAX_VALUE;
+        return order1Priority.compareTo(order2Priority);
+    }
 
-        return order1Priority.intValue() - order2Priority.intValue();
+    private int compareEnteredDate(Order order1, Order order2) {
+        Date order1EnteredDate = order1.getEnteredDate();
+        Date order2EnteredDate = order2.getEnteredDate();
+        return (null != order1EnteredDate && null != order2EnteredDate) ? order1EnteredDate.compareTo(order2EnteredDate) : 0;
     }
 
 }

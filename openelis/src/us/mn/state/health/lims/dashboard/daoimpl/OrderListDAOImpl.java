@@ -117,7 +117,7 @@ public class OrderListDAOImpl implements OrderListDAO {
 
     @Override
     public List<Order> getAllSampleNotCollectedPendingBeforeToday() {
-        String sqlForAllSampleNotCollectedPendingBeforeToday = createSqlStringForPendingOrders("sample.accession_number is null and analysis.status_id IN (" + getAllNonReferredAnalysisStatus() + ")", "sample.lastupdated");
+        String sqlForAllSampleNotCollectedPendingBeforeToday = createSqlStringForPendingOrders("sample.accession_number is null and analysis.status_id IN (" + getAllNonReferredAnalysisStatus() + ")", "sample.lastupdated desc");
         return getOrders(sqlForAllSampleNotCollectedPendingBeforeToday);
     }
 
@@ -187,8 +187,8 @@ public class OrderListDAOImpl implements OrderListDAO {
                             accessionResultSet.getInt("pending_tests_count"),
                             accessionResultSet.getInt("pending_validation_count"),
                             accessionResultSet.getInt("total_test_count"),
-                            accessionResultSet.getDate("collection_date"),
-                            accessionResultSet.getDate("entered_date"),
+                            accessionResultSet.getTimestamp("collection_date"),
+                            accessionResultSet.getTimestamp("entered_date"),
                             comments,
                             sectionNames
         );
@@ -211,8 +211,9 @@ public class OrderListDAOImpl implements OrderListDAO {
             String commentToShow="";
             Long priorityValue=Long.MAX_VALUE;
             for(String comment: comments){
-                if(null!= OrderComparator.priorityMap.get(comment) && OrderComparator.priorityMap.get(comment) < priorityValue ){
-                    priorityValue=OrderComparator.priorityMap.get(comment);
+                Long commentPriority = OrderComparator.getPriorityMap().get(comment);
+                if(null!= commentPriority && commentPriority < priorityValue ){
+                    priorityValue= commentPriority;
                     commentToShow=comment;
                 }
             }
@@ -290,7 +291,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null\n" +
                 "WHERE "+condition+"\n" +
                 "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time\n" +
-                "ORDER BY "+ OrderBy +" DESC\n" +
+                "ORDER BY "+ OrderBy +"\n" +
                 "LIMIT 1000;";
     }
 
