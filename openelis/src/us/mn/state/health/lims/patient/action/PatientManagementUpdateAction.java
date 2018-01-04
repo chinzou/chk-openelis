@@ -421,8 +421,14 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
 
                     if ((listIdentity.getIdentityData() == null && !GenericValidator.isBlankOrNull(paramValue))
                             || (listIdentity.getIdentityData() != null && !listIdentity.getIdentityData().equals(paramValue))) {
-                        listIdentity.setIdentityData(paramValue);
-                        identityDAO.updateData(listIdentity);
+                        List<PatientIdentity> matchingIdentity=identityDAO.getPatientIdentitiesByValueAndType(paramValue,typeID);
+                        if(matchingIdentity!=null && matchingIdentity.size()==0){
+                            listIdentity.setIdentityData(paramValue);
+                            identityDAO.updateData(listIdentity);
+                        }else{
+                            throw new LIMSDuplicateRecordException("PatientID " + listIdentity.getIdentityData() + " already exists.");
+                        }
+
                     }
 
                     break;
