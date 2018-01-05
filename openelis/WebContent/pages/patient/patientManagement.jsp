@@ -126,6 +126,7 @@ if( patientGenderRequired){
 }
 if( patientNamesRequired){
 	pt_requiredFields.push("firstNameID");
+	pt_requiredFields.push("lastNameID");
 }
 
 var pt_requiredOneOfFields = new Array();
