@@ -247,25 +247,19 @@
 </tr>
 <% } else { %>
 <tr>
-
-    <td class="lastNameLabel">
-        <%= StringUtil.getContextualMessageForKey("sample.entry.provider.fullName") %>:
-        <% if(requesterLastNameRequired ){ %>
-        <span class="requiredlabel">*</span>
-        <% } %>
+    <td class="firstNameLabel">
+        <bean:message key="sample.entry.provider.fullName"/>:
     </td>
-    <td class="lastName">
-        <html:text name="<%=formName%>"
-                   property="providerLastName"
-                   styleId="providerLastNameID"
-                   onchange="makeDirty();setSave()"
-                   size="30" />
-        <bean:message key="humansampleone.provider.firstName.short"/>:
-        <html:text name="<%=formName%>"
-                   property="providerFirstName"
-                   styleId="providerFirstNameID"
-                   onchange="makeDirty();"
-                   size="30" />
+    <td>
+        <html:select name="<%=formName%>" property="providerId" styleId="providerId">
+            <app:optionsCollection
+                    name="<%=formName%>"
+                    property="providerList"
+                    label="fullName"
+                    value="id"
+                    allowEdits="true"
+            />
+        </html:select>
     </td>
 </tr>
 
