@@ -156,8 +156,8 @@ function createRow(table, firstName, middleName, lastName, gender, DOB, stNumber
             var lastNameCell = newRow.insertCell(++cellCounter);
         } else {
             var lastNameCell = newRow.insertCell(++cellCounter);
-            var firstNameCell = newRow.insertCell(++cellCounter);
             var middleNameCell = newRow.insertCell(++cellCounter);
+            var firstNameCell = newRow.insertCell(++cellCounter);
         }
 		var genderCell = newRow.insertCell(++cellCounter);
 		var dobCell = newRow.insertCell(++cellCounter);
@@ -262,8 +262,8 @@ jQuery(function(){
             <th><bean:message key="patient.epiLastName"/></th>
         <% } else { %>
             <th><bean:message key="patient.epiLastName"/></th>
-            <th><bean:message key="patient.epiFirstName"/></th>
             <th><bean:message key="patient.epiMiddleName"/></th>
+            <th><bean:message key="patient.epiFirstName"/></th>
         <% } %>
 		<th><%=StringUtil.getContextualMessageForKey("patient.search.all_IDs") %></th>
 	</tr>
@@ -321,16 +321,6 @@ jQuery(function(){
                       >
             </td>
             <td headers="patient" >
-                <input name="searchPatientFirstName"
-                       style="display:table-cell; width:96%"
-                       id="firstName"
-                       class="text"
-                       type="text"
-                       onkeyup="setSearch(); "
-                       onblur="makeExclusive(this);"
-                       >
-                </td>
-            <td headers="patient" >
                 <input name="searchPatientMiddleName"
                        style="display:table-cell; width:96%"
                        id="middleName"
@@ -340,6 +330,16 @@ jQuery(function(){
                        onblur="makeExclusive(this);"
                        >
             </td>
+	    <td headers="patient" >
+		<input name="searchPatientFirstName"
+       	         	   style="display:table-cell; width:96%"
+			   id="firstName"
+			   class="text"
+			   type="text"
+			   onkeyup="setSearch(); "
+			   onblur="makeExclusive(this);"
+			>
+		</td>
         <% } %>
 		<td headers="patient">
 			<input name="searchPatientID"
@@ -387,11 +387,11 @@ jQuery(function(){
                         <bean:message key="patient.epiLastName"/>
                     </th>
                     <th width="15%">
-                        <bean:message key="patient.epiFirstName"/>
-                    </th>
-                    <th width="15%">
                         <bean:message key="patient.epiMiddleName"/>
                     </th>
+					<th width="15%">
+						<bean:message key="patient.epiFirstName"/>
+					</th>
                   <% } %>
 				<th width="5%">
 					<bean:message key="patient.gender"/>

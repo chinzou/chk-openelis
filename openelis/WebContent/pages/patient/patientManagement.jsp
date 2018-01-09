@@ -967,6 +967,18 @@ jQuery(function(){
           				      onchange="updatePatientEditStatus();"
           				      styleId="lastNameID"/>
           		</td>
+		<td class="middleNameLabel" width="10%" align="right">
+			<bean:message key="patient.epiMiddleName" />
+			:
+		</td>
+		<td class="middleName" width="20%">
+			<nested:text name='<%=formName%>'
+						 property="patientProperties.middleName"
+						 styleClass="text"
+						 size="40"
+						 onchange="updatePatientEditStatus();"
+						 styleId="middleNameID"/>
+		</td>
           		<td class="firstNameLabel" width="10%" align="right">
           			<bean:message key="patient.epiFirstName" />
           			:
@@ -982,18 +994,7 @@ jQuery(function(){
           					  onchange="updatePatientEditStatus();"
           					  styleId="firstNameID"/>
           		</td>
-                <td class="middleNameLabel" width="10%" align="right">
-                    <bean:message key="patient.epiMiddleName" />
-                    :
-                </td>
-                <td class="middleName" width="20%">
-                    <nested:text name='<%=formName%>'
-                              property="patientProperties.middleName"
-                              styleClass="text"
-                              size="40"
-                              onchange="updatePatientEditStatus();"
-                              styleId="middleNameID"/>
-                </td>
+
            <% } %>
 
 	</tr>

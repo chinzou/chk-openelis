@@ -189,8 +189,8 @@ function createRow(table, firstName, middleName, lastName, gender, DOB, stNumber
             var lastNameCell = newRow.insertCell(++cellCounter);
         } else {
             var lastNameCell = newRow.insertCell(++cellCounter);
-            var firstNameCell = newRow.insertCell(++cellCounter);
             var middleNameCell = newRow.insertCell(++cellCounter);
+            var firstNameCell = newRow.insertCell(++cellCounter);
         }
 		var genderCell = newRow.insertCell(++cellCounter);
 		var dobCell = newRow.insertCell(++cellCounter);
@@ -303,11 +303,11 @@ function /*void*/ dirtySearchInfo(e){
             <td class="searchLastName" width="30%">
                 <bean:message key="patient.epiLastName"/>
             </td>
-            <td class="searchFirstName" width="25%">
-                <bean:message key="patient.epiFirstName"/>
-            </td>
             <td class="searchMiddleName" width="25%">
                 <bean:message key="patient.epiMiddleName"/>
+            </td>
+            <td class="searchFirstName" width="25%">
+                <bean:message key="patient.epiFirstName"/>
             </td>
         <% } %>
 		<% if( supportSTNumber ){ %>
@@ -348,11 +348,11 @@ function /*void*/ dirtySearchInfo(e){
         <td class="searchLastName" >
           <input name="searchLastName" size="30" value="" id="searchLastNameID" class="text" type="text" onkeyup="dirtySearchInfo( event )">
         </td>
-        <td class="searchFirstName">
-          <input name="searchFirstName" size="30" value="" id="searchFirstNameID" class="text" type="text" onkeyup="dirtySearchInfo( event )" >
-        </td>
         <td class="searchMiddleName">
           <input name="searchMiddleName" size="30" value="" id="searchMiddleNameID" class="text" type="text" onkeyup="dirtySearchInfo( event )" >
+        </td>
+        <td class="searchFirstName">
+          <input name="searchFirstName" size="30" value="" id="searchFirstNameID" class="text" type="text" onkeyup="dirtySearchInfo( event )" >
         </td>
     <% } %>
 
@@ -416,11 +416,11 @@ function /*void*/ dirtySearchInfo(e){
                 <th class="lastName" width="18%">
                     <bean:message key="patient.epiLastName"/>
                 </th>
-                <th class="firstName" width="15%">
-                    <bean:message key="patient.epiFirstName"/>
-                </th>
                 <th class="middleName" width="15%">
                     <bean:message key="patient.epiMiddleName"/>
+                </th>
+                <th class="firstName" width="15%">
+                    <bean:message key="patient.epiFirstName"/>
                 </th>
                 <% } %>
 				<th width="5%">
