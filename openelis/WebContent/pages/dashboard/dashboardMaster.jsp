@@ -105,6 +105,8 @@ basePath = path + "/";
         data-patientName = '<bean:message key="dashboard.sample.column.patientName"/>'
         data-source = '<bean:message key="dashboard.sample.column.source"/>'
         data-sectionNames = '<bean:message key="dashboard.sample.column.sectionNames"/>'
+        data-sampleDate = '<bean:message key="dashboard.sample.column.sampleDate"/>'
+        data-orderDate =  '<bean:message key="dashboard.sample.column.orderDate"/>'
         data-total = '<bean:message key="dashboard.sample.column.total"/>'
         data-notes = '<bean:message key="dashboard.sample.column.notes"/>'
         data-action = '<bean:message key="dashboard.sample.column.action"/>'
@@ -202,12 +204,12 @@ basePath = path + "/";
 
        showStats(todayStats)
 
-        var todaySamplesToCollectObject = new order("#todaySamplesToCollectListContainer-slick-grid", todaySampleNotCollectedList, generateAllLinksForOrder, getColumnsForSampleNotCollected, false);
+        var todaySamplesToCollectObject = new order("#todaySamplesToCollectListContainer-slick-grid", todaySampleNotCollectedList, generateAllLinksForOrder, getColumnsForSampleNotCollectedForToday, false);
         var dataViewForTodaySamplesToCollect = new Slick.Data.DataView({ inlineFilters: true });
         var gridForTodaySamplesToCollect = new Slick.Grid(todaySamplesToCollectObject.div, dataViewForTodaySamplesToCollect, todaySamplesToCollectObject.columns,options);
         createGrid(gridForTodaySamplesToCollect, dataViewForTodaySamplesToCollect, todaySamplesToCollectObject, onRowSelection);
 
-        var backlogSamplesToCollectObject = new order("#backlogSamplesToCollectListContainer-slick-grid", backlogSampleNotCollectedList, generateAllLinksForOrder, getColumnsForSampleNotCollected, false);
+        var backlogSamplesToCollectObject = new order("#backlogSamplesToCollectListContainer-slick-grid", backlogSampleNotCollectedList, generateAllLinksForOrder,getColumnsForSampleNotCollected, false);
         var dataViewForBacklogSamplesToCollect = new Slick.Data.DataView({ inlineFilters: true });
         var gridForBacklogSamplesToCollect = new Slick.Grid(backlogSamplesToCollectObject.div, dataViewForBacklogSamplesToCollect, backlogSamplesToCollectObject.columns,options);
         createGrid(gridForBacklogSamplesToCollect, dataViewForBacklogSamplesToCollect, backlogSamplesToCollectObject, onRowSelection);
@@ -305,7 +307,7 @@ basePath = path + "/";
 
     function getAddressValue(response, index) {
         var field = response.getElementsByTagName('addressline').item(index);
-        var value = field && field.getElementsByTagName('value').item(0);
+        var value = field && field.getElementsByTagName('value' ).item(0);
 
         return value != null && value.firstChild != null ? value.firstChild.nodeValue : "";
     }

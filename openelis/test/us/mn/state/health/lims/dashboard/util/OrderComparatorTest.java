@@ -49,7 +49,7 @@ public class OrderComparatorTest {
     public void shouldShortOrderListByPriority() throws Exception {
         OrderComparator.setConfigPath(TEST_CONFIG_PATH);
         Order order1 = createOrder("18122017-003", "b4912f35-cf44-45ca-aa85-c1827daecaad",
-                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD", false);
+                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD",false);
         Order order2 = createOrder("18122017-002", "b4912f35-cf44-45ca-aa85-c1827daecadd",
                 "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD-High", false);
         Order order3 = createOrder("18122017-004", "b4912f35-cf44-45ca-aa85-c1827daecaed",
@@ -102,6 +102,6 @@ public class OrderComparatorTest {
         return new Order(accessionNumber, uuid, null,
                 stNumber, firstName, null, lastName, null, isCompleted,
                 false, 1, 1, 1, null,
-                enteredDate, comments, null);
+                enteredDate, comments, null, null, null);
     }
 }

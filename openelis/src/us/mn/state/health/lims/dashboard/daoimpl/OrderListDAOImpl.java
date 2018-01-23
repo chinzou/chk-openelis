@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.text.SimpleDateFormat;
 
 import static java.lang.Integer.parseInt;
 import static us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil.AnalysisStatus.BiologistRejected;
@@ -46,6 +47,7 @@ import static us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil.Ana
 import static us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil.AnalysisStatus.TechnicalAcceptance;
 import static us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil.AnalysisStatus.TechnicalRejected;
 import static us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil.getStatusID;
+
 
 public class OrderListDAOImpl implements OrderListDAO {
 
@@ -187,10 +189,12 @@ public class OrderListDAOImpl implements OrderListDAO {
                             accessionResultSet.getInt("pending_tests_count"),
                             accessionResultSet.getInt("pending_validation_count"),
                             accessionResultSet.getInt("total_test_count"),
-                            accessionResultSet.getTimestamp("collection_date"),
+                            accessionResultSet.getDate("collection_date"),
                             accessionResultSet.getTimestamp("entered_date"),
                             comments,
-                            sectionNames
+                            sectionNames,
+                            accessionResultSet.getTimestamp("sample_collected_date"),
+                            accessionResultSet.getTimestamp("order_date")
         );
     }
 
@@ -203,6 +207,7 @@ public class OrderListDAOImpl implements OrderListDAO {
         String[] unique = new HashSet<String>(Arrays.asList(holders)).toArray(new String[0]);
         return StringUtils.join(unique, ",");
     }
+
 
     private String getUniqueComments(ResultSet accessionResultSet) throws SQLException {
         String analysis_comments = accessionResultSet.getString("analysis_comments");
@@ -265,6 +270,8 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "string_agg(test_section.name, '" + COMMENT_SEPARATOR + "') AS section_names, \n" +
                 "sample.uuid AS uuid, \n" +
                 "sample.id AS id, \n" +
+                "max(sample.collection_date) AS sample_collected_date, \n" +
+                "max(analysis.lastupdated) AS order_date, \n" +
                 "sample.collection_date AS collection_date, \n" +
                 "sample.entered_date AS entered_date, \n" +
                 "person.first_name AS first_name, \n" +
@@ -290,7 +297,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null\n" +
                 "WHERE "+condition+"\n" +
-                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time\n" +
+                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name,sample.lastupdated, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time\n" +
                 "ORDER BY "+ OrderBy +"\n" +
                 "LIMIT 1000;";
     }
@@ -302,6 +309,8 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "string_agg(test_section.name, '" + COMMENT_SEPARATOR + "') AS section_names, \n" +
                 "sample.id AS id, \n" +
                 "sample.collection_date AS collection_date, \n" +
+                "max(sample.collection_date) AS sample_collected_date, \n" +
+                "max(analysis.lastupdated) AS order_date, \n" +
                 "sample.entered_date AS entered_date, \n" +
                 "person.first_name AS first_name, \n" +
                 "person.middle_name AS middle_name, \n" +

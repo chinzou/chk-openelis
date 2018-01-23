@@ -20,6 +20,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.bahmni.feed.openelis.utils.JsonTimeSerializer;
 
 import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
+import org.apache.commons.lang3.StringUtils;
+
 
 public class Order {
     private String accessionNumber;
@@ -39,12 +43,16 @@ public class Order {
     private Date enteredDate;
     private String comments;
     private String sectionNames;
+    private Date sampleDate;
+    private Date orderDate;
+
+
 
     public Order() {
     }
 
     public Order(String accessionNumber, String uuid, String orderId, String stNumber, String firstName, String middleName, String lastName, String source, boolean isCompleted, boolean isPrinted,
-                 int pendingTestCount, int pendingValidationCount, int totalTestCount, Date collectionDate, Date enteredDate, String comments, String sectionNames) {
+                 int pendingTestCount, int pendingValidationCount, int totalTestCount, Date collectionDate, Date enteredDate, String comments, String sectionNames,Date sampleDate,Date orderDate) {
         this.accessionNumber = accessionNumber;
         this.uuid = uuid;
         this.orderId = orderId;
@@ -62,6 +70,8 @@ public class Order {
         this.enteredDate = enteredDate;
         this.comments = comments;
         this.sectionNames = sectionNames;
+        this.sampleDate = sampleDate;
+        this.orderDate = orderDate;
     }
 
     public String getAccessionNumber() {
@@ -229,5 +239,28 @@ public class Order {
 
     public void setSectionNames(String sectionNames) {
         this.sectionNames = sectionNames;
+    }
+    public String getOrderDate(){
+        if(orderDate == null){
+            return StringUtils.EMPTY;
+        }
+        return new SimpleDateFormat("DD-MM-YYYY").format(orderDate);
+
+    }
+
+    public void setOrderDate(Date orderDate){
+        this.orderDate = orderDate;
+    }
+
+    public String getSampleDate(){
+        if(sampleDate == null){
+            return StringUtils.EMPTY;
+        }
+        return new SimpleDateFormat("DD-MM-YYYY").format(sampleDate);
+
+    }
+
+    public void setSampleDate(Date sampleDate){
+         this.sampleDate =sampleDate;
     }
 }
