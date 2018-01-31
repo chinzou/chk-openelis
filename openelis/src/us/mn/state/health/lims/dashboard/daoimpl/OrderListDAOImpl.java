@@ -205,7 +205,7 @@ public class OrderListDAOImpl implements OrderListDAO {
 
     private String getUniqueValueAsCSV(String[] holders) {
         String[] unique = new HashSet<String>(Arrays.asList(holders)).toArray(new String[0]);
-        return StringUtils.join(unique, ",");
+        return StringUtils.join(unique, "/");
     }
 
 

@@ -50,7 +50,7 @@
   }
 
   function YesNoFormatter(row, cell, value, columnDef, dataContext) {
-    return value ? "Yes" : "No";
+    return value ? "oui" : "non";
   }
 
   function CheckmarkFormatter(row, cell, value, columnDef, dataContext) {
