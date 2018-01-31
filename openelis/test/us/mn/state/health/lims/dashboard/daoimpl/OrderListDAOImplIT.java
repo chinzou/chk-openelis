@@ -128,7 +128,7 @@ public class OrderListDAOImplIT extends IT {
         assertEquals( 2, sampleByAccessionNumber1.getPendingTestCount());
         assertEquals( 1, sampleByAccessionNumber1.getPendingValidationCount());
         assertEquals( 3, sampleByAccessionNumber1.getTotalTestCount());
-        assertEquals("New,user", sampleByAccessionNumber1.getSectionNames());
+        assertEquals("New/user", sampleByAccessionNumber1.getSectionNames());
         assertEquals( false, sampleByAccessionNumber1.getIsCompleted());
 
         assertEquals( 0, sampleByAccessionNumber2.getPendingTestCount());
@@ -224,7 +224,7 @@ public class OrderListDAOImplIT extends IT {
         List<Order> sampleNotCollectedPendingBeforeToday = new OrderListDAOImpl().getAllSampleNotCollectedPendingBeforeToday();
 
         assertEquals(1, sampleNotCollectedPendingBeforeToday.size());
-        assertEquals("New,user", sampleNotCollectedPendingBeforeToday.get(0).getSectionNames());
+        assertEquals("New/user", sampleNotCollectedPendingBeforeToday.get(0).getSectionNames());
     }
 
     @org.junit.Test
