@@ -256,7 +256,7 @@ public class Order {
         if(sampleDate == null){
             return StringUtils.EMPTY;
         }
-        return new SimpleDateFormat("DD-MM-YYYY").format(sampleDate);
+        return new SimpleDateFormat("dd-MM-YYYY").format(sampleDate);
 
     }
 

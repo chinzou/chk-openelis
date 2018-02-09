@@ -45,6 +45,7 @@ public class TestUpdateWithAccessionNumberProvider extends BaseQueryProvider {
 
         Sample sample = sampleDao.getSampleByID(sampleId);
         sampleDao.updateData(sample);
+        sample.setCollectionDateForDisplay(DateUtil.getCurrentDateAsText());
         sample.setAccessionNumber(accessionNumber);
         String sysUserId = sample.getSysUserId();
 
