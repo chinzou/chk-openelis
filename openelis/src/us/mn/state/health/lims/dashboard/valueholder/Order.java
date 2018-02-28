@@ -244,7 +244,7 @@ public class Order {
         if(orderDate == null){
             return StringUtils.EMPTY;
         }
-        return new SimpleDateFormat("DD-MM-YYYY").format(orderDate);
+        return new SimpleDateFormat("dd-MM-YYYY").format(orderDate);
 
     }
 
