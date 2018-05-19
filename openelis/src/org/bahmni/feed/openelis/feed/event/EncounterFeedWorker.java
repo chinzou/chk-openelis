@@ -2,15 +2,15 @@
 * The contents of this file are subject to the Mozilla Public License
 * Version 1.1 (the "License"); you may not use this file except in
 * compliance with the License. You may obtain a copy of the License at
-* http://www.mozilla.org/MPL/ 
-* 
+* http://www.mozilla.org/MPL/
+*
 * Software distributed under the License is distributed on an "AS IS"
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 * License for the specific language governing rights and limitations under
 * the License.
-* 
+*
 * The Original Code is OpenELIS code.
-* 
+*
 * Copyright (C) The Minnesota Department of Health.  All Rights Reserved.
 */
 
@@ -116,6 +116,8 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
     private static long provider_requester_type_id;
     private static String referring_org_type_id;
     private static Logger logger = Logger.getLogger(EncounterFeedWorker.class);
+
+    private static final String STAT = "STAT";
 
     public EncounterFeedWorker(HttpClient webClient, String urlPrefix, ExternalReferenceDao externalReferenceDao,
                                AuditingService auditingService, PanelItemDAO panelItemDAO,
@@ -264,7 +266,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
 
         Patient patient = getPatient(openMRSEncounter.getPatientUuid());
-        Sample sample = getSample(sysUserId, nowAsSqlDate, openMRSEncounter);
+        Sample sample = getSample(sysUserId, nowAsSqlDate, openMRSEncounter, orders);
         SampleHuman sampleHuman = getSampleHuman(sysUserId);
         List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(orders, sysUserId, nowAsSqlDate, sample, processState);
 
@@ -296,6 +298,38 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             sampleTestOrderCollectionList.add(sampleTestCollection);
         }
         return sampleTestOrderCollectionList;
+    }
+
+    private Sample getSample(String sysUserId, Date nowAsSqlDate, OpenMRSEncounter openMRSEncounter, List<OpenMRSOrder> orders) {
+        Sample sample = new Sample();
+        sample.setSysUserId(sysUserId);
+        sample.setAccessionNumber(null);
+
+        SampleSource sampleSource = sampleSourceService.getSampleSource(openMRSEncounter);
+
+        sample.setSampleSource(sampleSource);
+
+        // TODO : Mujir - remove this hardcoding???? Read this from the event????
+        // TODO: Aarthy - Send encounter Date Time as part of event
+        sample.setEnteredDate(new java.util.Date());
+        sample.setReceivedDate(nowAsSqlDate);
+        sample.setDomain(SystemConfiguration.getInstance().getHumanDomain());
+        sample.setStatusId(StatusOfSampleUtil.getStatusID(StatusOfSampleUtil.OrderStatus.Entered));
+
+        // Mujir - create an external reference to order id in openelis.. this can go in Sample against the accession number
+        sample.setUUID(openMRSEncounter.getEncounterUuid());
+        String priority = "0";
+
+        for(OpenMRSOrder order : orders) {
+            if(STAT.equals(order.getUrgency())) {
+                priority = "1";
+                break;
+            }
+        }
+
+        sample.setPriority(priority);
+
+        return sample;
     }
 
     private void createSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId) {
@@ -472,7 +506,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             SampleTestOrderCollection sampleTestCollection = new SampleTestOrderCollection(sampleItem, sampleItemTestCache.getTests(sampleItem), nowAsSqlDate);
             sampleTestOrderCollectionList.add(sampleTestCollection);
         }
-            return sampleTestOrderCollectionList;
+        return sampleTestOrderCollectionList;
     }
 
     private static SampleItem buildSampleItem(String sysUserId, Sample sample, int sampleItemIdIndex, TypeOfSample typeOfSample) {
