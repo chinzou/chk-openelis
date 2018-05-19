@@ -178,7 +178,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         if (sample != null) {
             updateSample(openMRSEncounter, sample, processState,sysUserId);
         } else {
-            createSample(openMRSEncounter, processState,sysUserId);
+            createSamples(openMRSEncounter, processState,sysUserId);
         }
     }
 
@@ -221,6 +221,81 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             }
         }
         openMRSEncounter.getOrders().removeAll(ordersToRemove);
+    }
+
+    private void createSamples(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId) {
+        filterNewTestsAdded(openMRSEncounter, sysUserId);
+        if(!openMRSEncounter.hasLabOrder() || isEmpty(openMRSEncounter.getLabOrders())){
+            return;
+        }
+        HashMap<String, List<OpenMRSOrder>> ordersBySampleType = groupOrdersBySampleType(openMRSEncounter.getLabOrders());
+        for(List<OpenMRSOrder> orders : ordersBySampleType.values()) {
+            createSeparateSample(openMRSEncounter, processState, sysUserId, orders);
+        }
+    }
+
+    private HashMap<String, List<OpenMRSOrder>> groupOrdersBySampleType(List<OpenMRSOrder> orders) {
+        HashMap<String, List<OpenMRSOrder>> map = new HashMap<>();
+
+        for(OpenMRSOrder order : orders) {
+            String sampleTypeId = "";
+            String uuid = order.getConcept().getUuid();
+            if(order.isLabOrderForPanel()) {
+                ExternalReference panel = externalReferenceDao.getData(uuid, "Panel");
+                List panelItems = panelItemDAO.getPanelItemsForPanel(String.valueOf(panel.getItemId()));
+                PanelItem panelItem = (PanelItem) panelItems.get(0);
+                sampleTypeId = typeOfSampleTestDAO.getTypeOfSampleTestForTest(panelItem.getTest().getId()).getTypeOfSampleId();
+            }
+            else {
+                ExternalReference test = externalReferenceDao.getData(uuid, "Test");
+                sampleTypeId = typeOfSampleTestDAO.getTypeOfSampleTestForTest(String.valueOf(test.getItemId())).getTypeOfSampleId();
+            }
+            List<OpenMRSOrder> openMRSOrders = map.get(sampleTypeId);
+            List<OpenMRSOrder> sameSampleTypeOrders = openMRSOrders == null ?
+                    new ArrayList<OpenMRSOrder>() : openMRSOrders;
+            sameSampleTypeOrders.add(order);
+            map.put(sampleTypeId, sameSampleTypeOrders);
+        }
+
+        return map;
+    }
+
+    private void createSeparateSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
+        Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
+
+        Patient patient = getPatient(openMRSEncounter.getPatientUuid());
+        Sample sample = getSample(sysUserId, nowAsSqlDate, openMRSEncounter);
+        SampleHuman sampleHuman = getSampleHuman(sysUserId);
+        List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(orders, sysUserId, nowAsSqlDate, sample, processState);
+
+        AnalysisBuilder analysisBuilder = getAnalysisBuilder(processState);
+        OpenMRSProvider openMRSProvider = openMRSEncounter.getProviders().get(0);
+        Provider providerByPersonName = providerDAO.getProviderByPersonName(openMRSProvider.getName());
+        String requesterId = null;
+        if(providerByPersonName != null){
+            requesterId = providerByPersonName.getId();
+        }
+
+        AddSampleService addSampleService = new AddSampleService(false);
+        addSampleService.persist(analysisBuilder, false, null, null,
+                new ArrayList<OrganizationAddress>(), sample,
+                sampleTestOrderCollectionList, new ArrayList<ObservationHistory>(), sampleHuman,
+                patient.getId(), null, requesterId, sysUserId,
+                getProviderRequesterTypeId(), getReferringOrgTypeId());
+    }
+
+    private List<SampleTestOrderCollection> getSampleTestCollections(List<OpenMRSOrder> orders, String sysUserId, Date nowAsSqlDate, Sample sample, FeedProcessState processState) {
+        List<SampleTestOrderCollection> sampleTestOrderCollectionList = new ArrayList<>();
+        SampleItemTestCache sampleItemTestCache = new SampleItemTestCache(typeOfSampleTestDAO, typeOfSampleDAO, sample, sysUserId);
+        for (OpenMRSOrder labOrder : orders) {
+            sampleItemTestCache.add(getTests(labOrder, processState));
+        }
+
+        for (SampleItem sampleItem : sampleItemTestCache.getSampleItems()) {
+            SampleTestOrderCollection sampleTestCollection = new SampleTestOrderCollection(sampleItem, sampleItemTestCache.getTests(sampleItem), nowAsSqlDate);
+            sampleTestOrderCollectionList.add(sampleTestCollection);
+        }
+        return sampleTestOrderCollectionList;
     }
 
     private void createSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId) {
