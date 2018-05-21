@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.text.SimpleDateFormat;
 
 import static java.lang.Integer.parseInt;
 import static us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil.AnalysisStatus.BiologistRejected;
@@ -194,7 +193,9 @@ public class OrderListDAOImpl implements OrderListDAO {
                             comments,
                             sectionNames,
                             accessionResultSet.getTimestamp("sample_collected_date"),
-                            accessionResultSet.getTimestamp("order_date")
+                            accessionResultSet.getTimestamp("order_date"),
+                            accessionResultSet.getString("sample_type"),
+                            accessionResultSet.getString("priority")
         );
     }
 
@@ -279,6 +280,8 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "person.last_name AS last_name, \n" +
                 "patient_identity.identity_data AS st_number, \n" +
                 "sample_source.name AS sample_source, \n" +
+                "sample.priority AS priority,\n" +
+                "type_of_sample.local_abbrev AS sample_type, \n" +
                 "SUM(CASE WHEN  analysis.status_id IN (" + getPendingAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_tests_count,\n" +
                 "SUM(CASE WHEN  analysis.status_id IN ("+ getPendingValidationAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_validation_count,\n" +
                 "string_agg(analysis.comment, '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
@@ -292,12 +295,13 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN patient_identity ON patient_identity.patient_id = patient.id \n" +
                 "INNER JOIN patient_identity_type ON patient_identity.identity_type_id = patient_identity_type.id AND patient_identity_type.identity_type='ST' \n" +
                 "INNER JOIN sample_item ON sample_item.samp_id = sample.id \n" +
+                "INNER JOIN type_of_sample on sample_item.typeosamp_id = type_of_sample.id \n" +
                 "INNER JOIN analysis ON analysis.sampitem_id = sample_item.id and analysis.status_id not in (" +  analysesReferredOrInFinalStatus() + ") and analysis.lastupdated < ?\n" +
                 "INNER JOIN test ON test.id = analysis.test_id\n" +
                 "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null\n" +
                 "WHERE "+condition+"\n" +
-                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name,sample.lastupdated, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time\n" +
+                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name,sample.lastupdated, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time, type_of_sample.local_abbrev\n" +
                 "ORDER BY "+ OrderBy +"\n" +
                 "LIMIT 1000;";
     }
@@ -317,6 +321,8 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "person.last_name AS last_name, \n" +
                 "patient_identity.identity_data AS st_number, \n" +
                 "sample_source.name AS sample_source, \n" +
+                "sample.priority AS priority,\n" +
+                "type_of_sample.local_abbrev AS sample_type, \n" +
                 "SUM(CASE WHEN  analysis.status_id IN (" + getPendingAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_tests_count,\n" +
                 "SUM(CASE WHEN  analysis.status_id IN ("+ getPendingValidationAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_validation_count,\n" +
                 "string_agg(analysis.comment, '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
@@ -340,12 +346,13 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN patient_identity ON patient_identity.patient_id = patient.id \n" +
                 "INNER JOIN patient_identity_type ON patient_identity.identity_type_id = patient_identity_type.id AND patient_identity_type.identity_type='ST' \n" +
                 "INNER JOIN sample_item ON sample_item.samp_id = sample.id \n" +
+                "INNER JOIN type_of_sample on sample_item.typeosamp_id = type_of_sample.id \n" +
                 "INNER JOIN analysis ON analysis.sampitem_id = sample_item.id \n" +
                 "INNER JOIN test ON test.id = analysis.test_id\n" +
                 "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null \n" +
                 "WHERE "+condition+"\n" +
-                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, sample.lastupdated, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time \n" +
+                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, sample.lastupdated, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time, type_of_sample.local_abbrev \n" +
                 "ORDER BY "+ OrderBy +" DESC\n" +
                 "LIMIT 1000;";
     }
