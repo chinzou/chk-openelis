@@ -65,6 +65,7 @@ public class Sample extends EnumValueItemImpl {
     private Set<SampleItem> sampleItems;
     private Patient patient;
     private String priority;
+    private String visitType;
 
 	private String uuid;
 
@@ -412,5 +413,13 @@ public class Sample extends EnumValueItemImpl {
 
 	public void setPriority(String priority) {
 		this.priority = priority;
+	}
+
+	public String getVisitType() {
+		return visitType;
+	}
+
+	public void setVisitType(String visitType) {
+		this.visitType = visitType;
 	}
 }
