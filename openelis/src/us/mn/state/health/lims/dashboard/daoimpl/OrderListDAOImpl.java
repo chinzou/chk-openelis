@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 import us.mn.state.health.lims.common.exception.LIMSRuntimeException;
 import us.mn.state.health.lims.common.util.DateUtil;
 import us.mn.state.health.lims.dashboard.dao.OrderListDAO;
-import us.mn.state.health.lims.dashboard.util.OrderComparator;
 import us.mn.state.health.lims.dashboard.valueholder.Order;
 import us.mn.state.health.lims.hibernate.HibernateUtil;
 import us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil;
@@ -175,6 +174,8 @@ public class OrderListDAOImpl implements OrderListDAO {
     private Order createOrder(ResultSet accessionResultSet, boolean completed) throws SQLException {
         String comments = getUniqueComments(accessionResultSet);
         String sectionNames = getUniqueSectionNames(accessionResultSet);
+        String priority = getPriority(accessionResultSet);
+
         return new Order(accessionResultSet.getString("accession_number"),
                             accessionResultSet.getString("uuid"),
                             accessionResultSet.getString("id"),
@@ -195,8 +196,21 @@ public class OrderListDAOImpl implements OrderListDAO {
                             accessionResultSet.getTimestamp("sample_collected_date"),
                             accessionResultSet.getTimestamp("order_date"),
                             accessionResultSet.getString("sample_type"),
-                            accessionResultSet.getString("priority")
+                            priority
         );
+    }
+
+    private String getPriority(ResultSet accessionResultSet) throws SQLException {
+        String priority = accessionResultSet.getString("priority");
+        String visitType = accessionResultSet.getString("visit_type");
+
+        if(StringUtils.isEmpty(priority) || StringUtils.isEmpty(visitType)) {
+            return "";
+        }
+        else if (priority.equals("1")) {
+            return visitType + "-Prioritaire";
+        }
+        return visitType;
     }
 
     private String getUniqueSectionNames(ResultSet accessionResultSet) throws SQLException {
@@ -213,18 +227,8 @@ public class OrderListDAOImpl implements OrderListDAO {
     private String getUniqueComments(ResultSet accessionResultSet) throws SQLException {
         String analysis_comments = accessionResultSet.getString("analysis_comments");
         if(StringUtils.isNotBlank(analysis_comments)) {
-            String[] comments = analysis_comments.split(COMMENT_SEPARATOR);
-            String commentToShow="";
-            Long priorityValue=Long.MAX_VALUE;
-            for(String comment: comments){
-                Long commentPriority = OrderComparator.getPriorityMap().get(comment);
-                if(null!= commentPriority && commentPriority < priorityValue ){
-                    priorityValue= commentPriority;
-                    commentToShow=comment;
-                }
-            }
-            String[] unique = new HashSet<String>(Arrays.asList(commentToShow)).toArray(new String[0]);
-            return StringUtils.join(unique, ",");
+            List<String> comments = Arrays.asList(analysis_comments.split(COMMENT_SEPARATOR));
+            return StringUtils.join(new HashSet<>(comments), ",");
         }else{
             return "";
         }
@@ -281,10 +285,11 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "patient_identity.identity_data AS st_number, \n" +
                 "sample_source.name AS sample_source, \n" +
                 "sample.priority AS priority,\n" +
+                "sample.visit_type AS visit_type, \n" +
                 "type_of_sample.local_abbrev AS sample_type, \n" +
                 "SUM(CASE WHEN  analysis.status_id IN (" + getPendingAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_tests_count,\n" +
                 "SUM(CASE WHEN  analysis.status_id IN ("+ getPendingValidationAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_validation_count,\n" +
-                "string_agg(analysis.comment, '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
+                "string_agg(nullif(analysis.comment, ''), '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
                 "COUNT(test.id) AS total_test_count,\n" +
                 "CASE WHEN document_track.report_generation_time is null THEN false ELSE true END as is_printed\n" +
                 "FROM Sample AS sample\n" +
@@ -322,10 +327,11 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "patient_identity.identity_data AS st_number, \n" +
                 "sample_source.name AS sample_source, \n" +
                 "sample.priority AS priority,\n" +
+                "sample.visit_type AS visit_type, \n" +
                 "type_of_sample.local_abbrev AS sample_type, \n" +
                 "SUM(CASE WHEN  analysis.status_id IN (" + getPendingAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_tests_count,\n" +
                 "SUM(CASE WHEN  analysis.status_id IN ("+ getPendingValidationAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_validation_count,\n" +
-                "string_agg(analysis.comment, '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
+                "string_agg(nullif(analysis.comment, ''), '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
                 "COUNT(test.id) AS total_test_count,\n" +
                 "CASE WHEN COUNT(analysis.id) = SUM(CASE WHEN  analysis.status_id IN (" +getCompletedStatus()+ ") THEN 1 ELSE 0 END) THEN true ELSE false END as is_completed,\n" +
                 "CASE WHEN document_track.report_generation_time is null THEN false ELSE true END as is_printed\n" +

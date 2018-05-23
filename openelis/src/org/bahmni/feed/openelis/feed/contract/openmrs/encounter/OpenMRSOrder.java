@@ -28,6 +28,7 @@ public class OpenMRSOrder {
     private String uuid;
     private String orderType;
     private String urgency;
+    private String visitType; //Will populate this field manually. This will not be a part of AtomFeed
 
     public String getUrgency() {
         return urgency;
@@ -124,5 +125,13 @@ public class OpenMRSOrder {
 
     public void setAction(String action) {
         this.action = action;
+    }
+
+    public String getVisitType() {
+        return visitType;
+    }
+
+    public void setVisitType(String visitType) {
+        this.visitType = visitType;
     }
 }

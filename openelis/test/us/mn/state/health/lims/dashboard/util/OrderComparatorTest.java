@@ -24,11 +24,11 @@ public class OrderComparatorTest {
     public void shouldSortOrderListByEnteredDate() throws Exception {
         OrderComparator.setConfigPath(TEST_CONFIG_PATH);
         Order order1 = createOrder("18122017-003", "b4912f35-cf44-45ca-aa85-c1827daecaad",
-                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD", false);
+                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD", false, "Sang", "0");
         Order order2 = createOrder("18122017-002", "b4912f35-cf44-45ca-aa85-c1827daecadd",
-                "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD", false);
+                "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD", false, "Sang", "0");
         Order order3 = createOrder("18122017-004", "b4912f35-cf44-45ca-aa85-c1827daecaed",
-                "CP170004", "Pat", "Three", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:32:45"), "OPD", false);
+                "CP170004", "Pat", "Three", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:32:45"), "OPD", false, "Sang", "0");
 
         List<Order> orderList = Arrays.asList(order1, order2, order3);
         Collections.sort(orderList, new OrderComparator());
@@ -49,11 +49,11 @@ public class OrderComparatorTest {
     public void shouldShortOrderListByPriority() throws Exception {
         OrderComparator.setConfigPath(TEST_CONFIG_PATH);
         Order order1 = createOrder("18122017-003", "b4912f35-cf44-45ca-aa85-c1827daecaad",
-                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD",false);
+                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD",false, "Sang", "0");
         Order order2 = createOrder("18122017-002", "b4912f35-cf44-45ca-aa85-c1827daecadd",
-                "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD-High", false);
+                "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD-High", false, "Sang", "0");
         Order order3 = createOrder("18122017-004", "b4912f35-cf44-45ca-aa85-c1827daecaed",
-                "CP170004", "Pat", "Three", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:32:45"), "IPD", false);
+                "CP170004", "Pat", "Three", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:32:45"), "IPD", false, "Sang", "0");
 
         List<Order> orderList = Arrays.asList(order1, order2, order3);
         OrderComparator orderComparator = new OrderComparator();
@@ -78,13 +78,13 @@ public class OrderComparatorTest {
     public void shouldShortOrderListByCompletionStatus() throws Exception {
         OrderComparator.setConfigPath(TEST_CONFIG_PATH);
         Order order1 = createOrder("18122017-003", "b4912f35-cf44-45ca-aa85-c1827daecaad",
-                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD", true);
+                "CP170001", "Pat", "One", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:33:45"), "OPD", true, "Sang", "1");
         Order order2 = createOrder("18122017-002", "b4912f35-cf44-45ca-aa85-c1827daecadd",
-                "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD-High", false);
+                "CP170006", "Pat", "Two", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:31:45"), "OPD-High", false, "Urine", "0");
         Order order3 = createOrder("18122017-004", "b4912f35-cf44-45ca-aa85-c1827daecaed",
-                "CP170004", "Pat", "Three", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:32:45"), "IPD", false);
+                "CP170004", "Pat", "Three", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:32:45"), "IPD", false, "Sang", "1");
         Order order4 = createOrder("18122017-005", "b4912f35-cf44-45ca-aa85-c1827daecaad",
-                "CP170003", "Pat", "Four", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:34:45"), "IPD-High", true);
+                "CP170003", "Pat", "Four", SIMPLE_DATE_FORMAT.parse("2017-12-18 10:34:45"), "IPD-High", true, "Sang", "0");
 
         List<Order> orderList = Arrays.asList(order1, order2, order3, order4);
         OrderComparator orderComparator = new OrderComparator();
@@ -98,10 +98,10 @@ public class OrderComparatorTest {
         assertEquals("18122017-003", orderList.get(3).getAccessionNumber());
     }
 
-    private Order createOrder(String accessionNumber, String uuid, String stNumber, String firstName, String lastName, Date enteredDate, String comments, boolean isCompleted) {
+    private Order createOrder(String accessionNumber, String uuid, String stNumber, String firstName, String lastName, Date enteredDate, String comments, boolean isCompleted, String sampleType, String priority) {
         return new Order(accessionNumber, uuid, null,
                 stNumber, firstName, null, lastName, null, isCompleted,
                 false, 1, 1, 1, null,
-                enteredDate, comments, null, null, null);
+                enteredDate, comments, null, null, null, sampleType, priority);
     }
 }

@@ -16,6 +16,7 @@
 
 package org.bahmni.feed.openelis.feed.event;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.bahmni.feed.openelis.ObjectMapperRepository;
 import org.bahmni.feed.openelis.externalreference.dao.ExternalReferenceDao;
@@ -66,7 +67,6 @@ import us.mn.state.health.lims.sampleitem.daoimpl.SampleItemDAOImpl;
 import us.mn.state.health.lims.sampleitem.valueholder.SampleItem;
 import us.mn.state.health.lims.samplesource.dao.SampleSourceDAO;
 import us.mn.state.health.lims.samplesource.daoimpl.SampleSourceDAOImpl;
-import us.mn.state.health.lims.samplesource.valueholder.SampleSource;
 import us.mn.state.health.lims.siteinformation.daoimpl.SiteInformationDAOImpl;
 import us.mn.state.health.lims.statusofsample.util.StatusOfSampleUtil;
 import us.mn.state.health.lims.test.dao.TestDAO;
@@ -81,7 +81,6 @@ import us.mn.state.health.lims.typeofsample.valueholder.TypeOfSample;
 import us.mn.state.health.lims.typeofsample.valueholder.TypeOfSampleTest;
 import us.mn.state.health.lims.upload.action.AddSampleService;
 
-import java.io.IOException;
 import java.net.URI;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -164,7 +163,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             if (openMRSEncounter.hasLabOrder()) {
                 process(openMRSEncounter);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new LIMSRuntimeException(e);
         } finally {
             ElisHibernateSession session = (ElisHibernateSession) HibernateUtil.getSession();
@@ -175,13 +174,164 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
     public void process(OpenMRSEncounter openMRSEncounter) {
         logInfo(openMRSEncounter);
         FeedProcessState processState = new FeedProcessState();
-        Sample sample = sampleDAO.getSampleByUuidAndWithoutAccessionNumber(openMRSEncounter.getEncounterUuid());
+        List<OpenMRSOrder> labOrders = openMRSEncounter.getLabOrders();
+        HashMap<String, List<OpenMRSOrder>> ordersBySampleType = groupOrdersBySampleType(labOrders);
         String sysUserId = auditingService.getSysUserId();
-        if (sample != null) {
-            updateSample(openMRSEncounter, sample, processState,sysUserId);
-        } else {
-            createSamples(openMRSEncounter, processState,sysUserId);
+        setVisitTypeForOrders(labOrders);
+        String encounterUuid = openMRSEncounter.getEncounterUuid();
+
+        for (String sampleType : ordersBySampleType.keySet()) {
+            Sample sample = sampleDAO.getSampleByUuidAndSampleTypeIdAndWithoutAccessionNumber(encounterUuid, sampleType);
+            List<OpenMRSOrder> orders = ordersBySampleType.get(sampleType);
+
+            if (sample != null)
+                updateSample(openMRSEncounter, sample, processState, sysUserId, orders);
+            else
+                createSample(openMRSEncounter, processState, sysUserId, orders);
         }
+    }
+
+    private HashMap<String, List<OpenMRSOrder>> groupOrdersBySampleType(List<OpenMRSOrder> orders) {
+        HashMap<String, List<OpenMRSOrder>> ordersGroup = new HashMap<>();
+
+        for (OpenMRSOrder order : orders) {
+            String sampleTypeId;
+            String uuid = order.getConcept().getUuid();
+            if (order.isLabOrderForPanel()) {
+                ExternalReference panel = externalReferenceDao.getData(uuid, "Panel");
+                List panelItems = panelItemDAO.getPanelItemsForPanel(String.valueOf(panel.getItemId()));
+                PanelItem panelItem = (PanelItem) panelItems.get(0);
+                sampleTypeId = typeOfSampleTestDAO.getTypeOfSampleTestForTest(panelItem.getTest().getId()).getTypeOfSampleId();
+            } else {
+                ExternalReference test = externalReferenceDao.getData(uuid, "Test");
+                sampleTypeId = typeOfSampleTestDAO.getTypeOfSampleTestForTest(String.valueOf(test.getItemId())).getTypeOfSampleId();
+            }
+            List<OpenMRSOrder> openMRSOrders = ordersGroup.get(sampleTypeId);
+            List<OpenMRSOrder> sameSampleTypeOrders = openMRSOrders == null ? new ArrayList<OpenMRSOrder>() : openMRSOrders;
+            sameSampleTypeOrders.add(order);
+            ordersGroup.put(sampleTypeId, sameSampleTypeOrders);
+        }
+
+        return ordersGroup;
+    }
+
+    private void updateSample(OpenMRSEncounter openMRSEncounter, Sample sample, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
+        //Remove all those tests for which the sample has been collected already.
+        filterNewTestsAdded(openMRSEncounter, sysUserId);
+        updateSamplePriority(sample, orders);
+        Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
+
+        List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(orders, sysUserId, nowAsSqlDate, sample, processState);
+        List<Analysis> existingAnalyses = analysisDAO.getAnalysesBySampleIdExcludedByStatusId(sample.getId(), getCancelledAnalysisStatusIds());
+        TestOrderDiff testOrderDiff = new TestOrderDiff(sampleTestOrderCollectionList, existingAnalyses);
+
+        AnalysisBuilder analysisBuilder = getAnalysisBuilder(processState);
+
+        addTestsToExistingSample(sample, sysUserId, nowAsSqlDate, analysisBuilder, testOrderDiff);
+        cancelAnalysisForDeletedTests(sample, sysUserId, testOrderDiff);
+        updateAnalysisForNotDeletedTests(sample, sysUserId, testOrderDiff);
+        if (sample != null) {
+            setCorrectPanelIdForUnchangedTests(sample, sysUserId, analysisBuilder, testOrderDiff);
+        }
+    }
+
+    private void createSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
+        filterNewTestsAdded(openMRSEncounter, sysUserId);
+        if (!openMRSEncounter.hasLabOrder() || isEmpty(openMRSEncounter.getLabOrders())) {
+            return;
+        }
+
+        Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
+
+        Patient patient = getPatient(openMRSEncounter.getPatientUuid());
+        Sample sample = getSample(sysUserId, nowAsSqlDate, openMRSEncounter, orders);
+        SampleHuman sampleHuman = getSampleHuman(sysUserId);
+        List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(orders, sysUserId, nowAsSqlDate, sample, processState);
+
+        AnalysisBuilder analysisBuilder = getAnalysisBuilder(processState);
+        OpenMRSProvider openMRSProvider = openMRSEncounter.getProviders().get(0);
+        Provider providerByPersonName = providerDAO.getProviderByPersonName(openMRSProvider.getName());
+        String requesterId = null;
+        if (providerByPersonName != null) {
+            requesterId = providerByPersonName.getId();
+        }
+
+        AddSampleService addSampleService = new AddSampleService(false);
+        addSampleService.persist(analysisBuilder, false, null, null,
+                new ArrayList<OrganizationAddress>(), sample,
+                sampleTestOrderCollectionList, new ArrayList<ObservationHistory>(), sampleHuman,
+                patient.getId(), null, requesterId, sysUserId,
+                getProviderRequesterTypeId(), getReferringOrgTypeId());
+    }
+
+    private List<SampleTestOrderCollection> getSampleTestCollections(List<OpenMRSOrder> orders, String sysUserId, Date nowAsSqlDate, Sample sample, FeedProcessState processState) {
+        List<SampleTestOrderCollection> sampleTestOrderCollectionList = new ArrayList<>();
+        SampleItemTestCache sampleItemTestCache = new SampleItemTestCache(typeOfSampleTestDAO, typeOfSampleDAO, sample, sysUserId);
+        for (OpenMRSOrder labOrder : orders) {
+            sampleItemTestCache.add(getTests(labOrder, processState));
+        }
+
+        for (SampleItem sampleItem : sampleItemTestCache.getSampleItems()) {
+            SampleTestOrderCollection sampleTestCollection = new SampleTestOrderCollection(sampleItem, sampleItemTestCache.getTests(sampleItem), nowAsSqlDate);
+            sampleTestOrderCollectionList.add(sampleTestCollection);
+        }
+        return sampleTestOrderCollectionList;
+    }
+
+    private Sample getSample(String sysUserId, Date nowAsSqlDate, OpenMRSEncounter openMRSEncounter, List<OpenMRSOrder> orders) {
+        Sample sample = new Sample();
+        sample.setSysUserId(sysUserId);
+        sample.setAccessionNumber(null);
+        sample.setSampleSource(sampleSourceService.getSampleSource(openMRSEncounter));
+
+        // TODO : Mujir - remove this hardcoding???? Read this from the event????
+        // TODO: Aarthy - Send encounter Date Time as part of event
+        sample.setEnteredDate(new java.util.Date());
+        sample.setReceivedDate(nowAsSqlDate);
+        sample.setDomain(SystemConfiguration.getInstance().getHumanDomain());
+        sample.setStatusId(StatusOfSampleUtil.getStatusID(StatusOfSampleUtil.OrderStatus.Entered));
+
+        // Mujir - create an external reference to order id in openelis.. this can go in Sample against the accession number
+        sample.setUUID(openMRSEncounter.getEncounterUuid());
+        sample.setPriority(getPriority(orders));
+        sample.setVisitType(getVisitType(orders));
+
+        return sample;
+    }
+
+    private void setVisitTypeForOrders(List<OpenMRSOrder> labOrders) {
+        for (OpenMRSOrder labOrder : labOrders) {
+            String commentToFulfiller = labOrder.getCommentToFulfiller();
+            String visitType = StringUtils.substringBetween(commentToFulfiller, "[[ ", " ]]");
+            String comment = commentToFulfiller == null ? "" : commentToFulfiller.replaceFirst("\\[\\[.*\\]\\]\\s*", "");
+            labOrder.setVisitType(StringUtils.isEmpty(visitType) ? null : visitType);
+            labOrder.setCommentToFulfiller(comment);
+        }
+    }
+
+    private String getPriority(List<OpenMRSOrder> orders) {
+        for (OpenMRSOrder order : orders) {
+            if (STAT.equals(order.getUrgency())) {
+                return "1";
+            }
+        }
+        return "0";
+    }
+
+    private String getVisitType(List<OpenMRSOrder> orders) {
+        for (OpenMRSOrder order : orders) {
+            if (StringUtils.isNotEmpty(order.getVisitType())) {
+                return order.getVisitType();
+            }
+        }
+        return "";
+    }
+
+    private void updateSamplePriority(Sample sample, List<OpenMRSOrder> orders) {
+        if("1".equals(sample.getPriority())) {
+            return;
+        }
+        sample.setPriority(getPriority(orders));
     }
 
     private void filterNewTestsAdded(OpenMRSEncounter openMRSEncounter, String sysUserId) {
@@ -225,165 +375,8 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         openMRSEncounter.getOrders().removeAll(ordersToRemove);
     }
 
-    private void createSamples(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId) {
-        filterNewTestsAdded(openMRSEncounter, sysUserId);
-        if(!openMRSEncounter.hasLabOrder() || isEmpty(openMRSEncounter.getLabOrders())){
-            return;
-        }
-        HashMap<String, List<OpenMRSOrder>> ordersBySampleType = groupOrdersBySampleType(openMRSEncounter.getLabOrders());
-        for(List<OpenMRSOrder> orders : ordersBySampleType.values()) {
-            createSeparateSample(openMRSEncounter, processState, sysUserId, orders);
-        }
-    }
-
-    private HashMap<String, List<OpenMRSOrder>> groupOrdersBySampleType(List<OpenMRSOrder> orders) {
-        HashMap<String, List<OpenMRSOrder>> map = new HashMap<>();
-
-        for(OpenMRSOrder order : orders) {
-            String sampleTypeId = "";
-            String uuid = order.getConcept().getUuid();
-            if(order.isLabOrderForPanel()) {
-                ExternalReference panel = externalReferenceDao.getData(uuid, "Panel");
-                List panelItems = panelItemDAO.getPanelItemsForPanel(String.valueOf(panel.getItemId()));
-                PanelItem panelItem = (PanelItem) panelItems.get(0);
-                sampleTypeId = typeOfSampleTestDAO.getTypeOfSampleTestForTest(panelItem.getTest().getId()).getTypeOfSampleId();
-            }
-            else {
-                ExternalReference test = externalReferenceDao.getData(uuid, "Test");
-                sampleTypeId = typeOfSampleTestDAO.getTypeOfSampleTestForTest(String.valueOf(test.getItemId())).getTypeOfSampleId();
-            }
-            List<OpenMRSOrder> openMRSOrders = map.get(sampleTypeId);
-            List<OpenMRSOrder> sameSampleTypeOrders = openMRSOrders == null ?
-                    new ArrayList<OpenMRSOrder>() : openMRSOrders;
-            sameSampleTypeOrders.add(order);
-            map.put(sampleTypeId, sameSampleTypeOrders);
-        }
-
-        return map;
-    }
-
-    private void createSeparateSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
-        Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
-
-        Patient patient = getPatient(openMRSEncounter.getPatientUuid());
-        Sample sample = getSample(sysUserId, nowAsSqlDate, openMRSEncounter, orders);
-        SampleHuman sampleHuman = getSampleHuman(sysUserId);
-        List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(orders, sysUserId, nowAsSqlDate, sample, processState);
-
-        AnalysisBuilder analysisBuilder = getAnalysisBuilder(processState);
-        OpenMRSProvider openMRSProvider = openMRSEncounter.getProviders().get(0);
-        Provider providerByPersonName = providerDAO.getProviderByPersonName(openMRSProvider.getName());
-        String requesterId = null;
-        if(providerByPersonName != null){
-            requesterId = providerByPersonName.getId();
-        }
-
-        AddSampleService addSampleService = new AddSampleService(false);
-        addSampleService.persist(analysisBuilder, false, null, null,
-                new ArrayList<OrganizationAddress>(), sample,
-                sampleTestOrderCollectionList, new ArrayList<ObservationHistory>(), sampleHuman,
-                patient.getId(), null, requesterId, sysUserId,
-                getProviderRequesterTypeId(), getReferringOrgTypeId());
-    }
-
-    private List<SampleTestOrderCollection> getSampleTestCollections(List<OpenMRSOrder> orders, String sysUserId, Date nowAsSqlDate, Sample sample, FeedProcessState processState) {
-        List<SampleTestOrderCollection> sampleTestOrderCollectionList = new ArrayList<>();
-        SampleItemTestCache sampleItemTestCache = new SampleItemTestCache(typeOfSampleTestDAO, typeOfSampleDAO, sample, sysUserId);
-        for (OpenMRSOrder labOrder : orders) {
-            sampleItemTestCache.add(getTests(labOrder, processState));
-        }
-
-        for (SampleItem sampleItem : sampleItemTestCache.getSampleItems()) {
-            SampleTestOrderCollection sampleTestCollection = new SampleTestOrderCollection(sampleItem, sampleItemTestCache.getTests(sampleItem), nowAsSqlDate);
-            sampleTestOrderCollectionList.add(sampleTestCollection);
-        }
-        return sampleTestOrderCollectionList;
-    }
-
-    private Sample getSample(String sysUserId, Date nowAsSqlDate, OpenMRSEncounter openMRSEncounter, List<OpenMRSOrder> orders) {
-        Sample sample = new Sample();
-        sample.setSysUserId(sysUserId);
-        sample.setAccessionNumber(null);
-
-        SampleSource sampleSource = sampleSourceService.getSampleSource(openMRSEncounter);
-
-        sample.setSampleSource(sampleSource);
-
-        // TODO : Mujir - remove this hardcoding???? Read this from the event????
-        // TODO: Aarthy - Send encounter Date Time as part of event
-        sample.setEnteredDate(new java.util.Date());
-        sample.setReceivedDate(nowAsSqlDate);
-        sample.setDomain(SystemConfiguration.getInstance().getHumanDomain());
-        sample.setStatusId(StatusOfSampleUtil.getStatusID(StatusOfSampleUtil.OrderStatus.Entered));
-
-        // Mujir - create an external reference to order id in openelis.. this can go in Sample against the accession number
-        sample.setUUID(openMRSEncounter.getEncounterUuid());
-        String priority = "0";
-
-        for(OpenMRSOrder order : orders) {
-            if(STAT.equals(order.getUrgency())) {
-                priority = "1";
-                break;
-            }
-        }
-
-        sample.setPriority(priority);
-
-        return sample;
-    }
-
-    private void createSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId) {
-        //A new sample can be created when the sample associated to this encounter is already collected.
-        filterNewTestsAdded(openMRSEncounter, sysUserId);
-        if(!openMRSEncounter.hasLabOrder() || isEmpty(openMRSEncounter.getLabOrders())){
-            return;
-        }
-
-        Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
-
-        Patient patient = getPatient(openMRSEncounter.getPatientUuid());
-        Sample sample = getSample(sysUserId, nowAsSqlDate, openMRSEncounter);
-        SampleHuman sampleHuman = getSampleHuman(sysUserId);
-        List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(openMRSEncounter, sysUserId, nowAsSqlDate, sample, processState);
-
-        AnalysisBuilder analysisBuilder = getAnalysisBuilder(processState);
-        OpenMRSProvider openMRSProvider = openMRSEncounter.getProviders().get(0);
-        Provider providerByPersonName = providerDAO.getProviderByPersonName(openMRSProvider.getName());
-        String requesterId = null;
-        if(providerByPersonName != null){
-            requesterId = providerByPersonName.getId();
-        }
-
-        AddSampleService addSampleService = new AddSampleService(false);
-        addSampleService.persist(analysisBuilder, false, null, null,
-                new ArrayList<OrganizationAddress>(), sample,
-                sampleTestOrderCollectionList, new ArrayList<ObservationHistory>(), sampleHuman,
-                patient.getId(), null, requesterId, sysUserId,
-                getProviderRequesterTypeId(), getReferringOrgTypeId());
-    }
-
     private boolean isEmpty(List<OpenMRSOrder> labOrders) {
         return labOrders==null || labOrders.size()==0 ;
-    }
-
-    private void updateSample(OpenMRSEncounter openMRSEncounter, Sample sample, FeedProcessState processState, String sysUserId) {
-        //Remove all those tests for which the sample has been collected already.
-        filterNewTestsAdded(openMRSEncounter,sysUserId);
-
-        Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
-
-        List<SampleTestOrderCollection> sampleTestOrderCollectionList = getSampleTestCollections(openMRSEncounter, sysUserId, nowAsSqlDate, sample, processState);
-        List<Analysis> existingAnalyses = analysisDAO.getAnalysesBySampleIdExcludedByStatusId(sample.getId(), getCancelledAnalysisStatusIds());
-        TestOrderDiff testOrderDiff = new TestOrderDiff(sampleTestOrderCollectionList, existingAnalyses);
-
-        AnalysisBuilder analysisBuilder = getAnalysisBuilder(processState);
-
-        addTestsToExistingSample(sample, sysUserId, nowAsSqlDate, analysisBuilder, testOrderDiff);
-        cancelAnalysisForDeletedTests(sample, sysUserId, testOrderDiff);
-        updateAnalysisForNotDeletedTests(sample, sysUserId, testOrderDiff);
-        if(sample!=null){
-            setCorrectPanelIdForUnchangedTests(sample, sysUserId, analysisBuilder, testOrderDiff);
-        }
     }
 
     private void updateAnalysisForNotDeletedTests(Sample sample, String sysUserId, TestOrderDiff testOrderDiff) {
@@ -495,20 +488,6 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         return patient;
     }
 
-    private List<SampleTestOrderCollection> getSampleTestCollections(OpenMRSEncounter openMRSEncounter, String sysUserId, Date nowAsSqlDate, Sample sample, FeedProcessState processState) {
-        List<SampleTestOrderCollection> sampleTestOrderCollectionList = new ArrayList<>();
-        SampleItemTestCache sampleItemTestCache = new SampleItemTestCache(typeOfSampleTestDAO, typeOfSampleDAO, sample, sysUserId);
-        for (OpenMRSOrder labOrder : openMRSEncounter.getLabOrders()) {
-            sampleItemTestCache.add(getTests(labOrder, processState));
-        }
-
-        for (SampleItem sampleItem : sampleItemTestCache.getSampleItems()) {
-            SampleTestOrderCollection sampleTestCollection = new SampleTestOrderCollection(sampleItem, sampleItemTestCache.getTests(sampleItem), nowAsSqlDate);
-            sampleTestOrderCollectionList.add(sampleTestCollection);
-        }
-        return sampleTestOrderCollectionList;
-    }
-
     private static SampleItem buildSampleItem(String sysUserId, Sample sample, int sampleItemIdIndex, TypeOfSample typeOfSample) {
 
         // TODO : Mujir - should this be empty??
@@ -568,28 +547,6 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         }
 
         return testOrders;
-    }
-
-    private Sample getSample(String sysUserId, Date nowAsSqlDate, OpenMRSEncounter openMRSEncounter) {
-        Sample sample = new Sample();
-        sample.setSysUserId(sysUserId);
-        sample.setAccessionNumber(null);
-
-        SampleSource sampleSource = sampleSourceService.getSampleSource(openMRSEncounter);
-
-        sample.setSampleSource(sampleSource);
-
-        // TODO : Mujir - remove this hardcoding???? Read this from the event????
-        // TODO: Aarthy - Send encounter Date Time as part of event
-        sample.setEnteredDate(new java.util.Date());
-        sample.setReceivedDate(nowAsSqlDate);
-        sample.setDomain(SystemConfiguration.getInstance().getHumanDomain());
-        sample.setStatusId(StatusOfSampleUtil.getStatusID(StatusOfSampleUtil.OrderStatus.Entered));
-
-        // Mujir - create an external reference to order id in openelis.. this can go in Sample against the accession number
-        sample.setUUID(openMRSEncounter.getEncounterUuid());
-
-        return sample;
     }
 
     private AnalysisBuilder getAnalysisBuilder(FeedProcessState processState) {
