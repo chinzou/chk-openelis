@@ -36,7 +36,11 @@ import us.mn.state.health.lims.sample.valueholder.Sample;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.Vector;
 
 /**
  * @author diane benz
@@ -764,6 +768,20 @@ public class SampleDAOImpl extends BaseDAOImpl implements SampleDAO {
 		} catch (HibernateException he) {
 			LogEvent.logErrorStack("SampleDAOImpl", "getSampleByUuidAndWithoutAccessionNumber(String uuid)", he);
 			throw new LIMSRuntimeException("Error in Sample getSampleByUuidAndWithoutAccessionNumber(String uuid)", he);
+		}
+	}
+
+	@Override
+	public Sample getSampleByUuidAndSampleTypeIdAndWithoutAccessionNumber(String uuid, String sampleTypeId) {
+		try {
+			String sql = "select si.sample from SampleItem si inner join si.sample where si.sample.accessionNumber is null and si.sample.uuid = :uuid and si.typeOfSample = :sampleTypeId";
+			Query query = HibernateUtil.getSession().createQuery(sql);
+			query.setParameter("uuid", uuid);
+			query.setParameter("sampleTypeId", Integer.parseInt(sampleTypeId));
+			return (Sample) query.uniqueResult();
+		} catch (HibernateException he) {
+			LogEvent.logErrorStack("SampleDAOImpl", "getSampleByUuidAndWithoutAccessionNumber(String uuid, String sampleTypeId)", he);
+			throw new LIMSRuntimeException("Error in Sample getSampleByUuidAndWithoutAccessionNumber(String uuid, String sampleTypeId)", he);
 		}
 	}
 
