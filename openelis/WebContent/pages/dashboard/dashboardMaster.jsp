@@ -105,6 +105,8 @@ basePath = path + "/";
         data-patientName = '<bean:message key="dashboard.sample.column.patientName"/>'
         data-source = '<bean:message key="dashboard.sample.column.source"/>'
         data-sectionNames = '<bean:message key="dashboard.sample.column.sectionNames"/>'
+        data-sampleType = '<bean:message key="dashboard.sample.column.sampleType"/>'
+        data-priority = '<bean:message key="dashboard.sample.column.priority"/>'
         data-sampleDate = '<bean:message key="dashboard.sample.column.sampleDate"/>'
         data-orderDate =  '<bean:message key="dashboard.sample.column.orderDate"/>'
         data-total = '<bean:message key="dashboard.sample.column.total"/>'

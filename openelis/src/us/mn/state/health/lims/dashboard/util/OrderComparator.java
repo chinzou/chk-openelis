@@ -62,8 +62,8 @@ public class OrderComparator implements Comparator<Order> {
     }
 
     private int comparePriority(Order order1, Order order2) {
-        Long order1Priority = priorityMap.get(order1.getComments());
-        Long order2Priority = priorityMap.get(order2.getComments());
+        Long order1Priority = priorityMap.get(order1.getPriority());
+        Long order2Priority = priorityMap.get(order2.getPriority());
         order1Priority = order1Priority != null ? order1Priority : (int) Integer.MAX_VALUE;
         order2Priority = order2Priority != null ? order2Priority : (int) Integer.MAX_VALUE;
         return order1Priority.compareTo(order2Priority);

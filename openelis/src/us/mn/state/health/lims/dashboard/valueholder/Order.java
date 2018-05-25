@@ -2,27 +2,27 @@
 * The contents of this file are subject to the Mozilla Public License
 * Version 1.1 (the "License"); you may not use this file except in
 * compliance with the License. You may obtain a copy of the License at
-* http://www.mozilla.org/MPL/ 
-* 
+* http://www.mozilla.org/MPL/
+*
 * Software distributed under the License is distributed on an "AS IS"
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 * License for the specific language governing rights and limitations under
 * the License.
-* 
+*
 * The Original Code is OpenELIS code.
-* 
+*
 * Copyright (C) The Minnesota Department of Health.  All Rights Reserved.
 */
 
 package us.mn.state.health.lims.dashboard.valueholder;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.apache.commons.lang3.StringUtils;
 import org.bahmni.feed.openelis.utils.JsonTimeSerializer;
 
-import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.text.DateFormat;
-import org.apache.commons.lang3.StringUtils;
+import java.util.Date;
+import java.util.Objects;
 
 
 public class Order {
@@ -45,14 +45,16 @@ public class Order {
     private String sectionNames;
     private Date sampleDate;
     private Date orderDate;
-
+    private String sampleType;
+    private String priority;
 
 
     public Order() {
     }
 
     public Order(String accessionNumber, String uuid, String orderId, String stNumber, String firstName, String middleName, String lastName, String source, boolean isCompleted, boolean isPrinted,
-                 int pendingTestCount, int pendingValidationCount, int totalTestCount, Date collectionDate, Date enteredDate, String comments, String sectionNames,Date sampleDate,Date orderDate) {
+                 int pendingTestCount, int pendingValidationCount, int totalTestCount, Date collectionDate, Date enteredDate, String comments, String sectionNames, Date sampleDate, Date orderDate,
+                 String sampleType, String priority) {
         this.accessionNumber = accessionNumber;
         this.uuid = uuid;
         this.orderId = orderId;
@@ -72,6 +74,8 @@ public class Order {
         this.sectionNames = sectionNames;
         this.sampleDate = sampleDate;
         this.orderDate = orderDate;
+        this.sampleType = sampleType;
+        this.priority = priority;
     }
 
     public String getAccessionNumber() {
@@ -192,45 +196,35 @@ public class Order {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Order order = (Order) o;
-
-        if (isCompleted != order.isCompleted) return false;
-        if (isPrinted != order.isPrinted) return false;
-        if (pendingTestCount != order.pendingTestCount) return false;
-        if (pendingValidationCount != order.pendingValidationCount) return false;
-        if (totalTestCount != order.totalTestCount) return false;
-        if (accessionNumber != null ? !accessionNumber.equals(order.accessionNumber) : order.accessionNumber != null)
-            return false;
-        if (collectionDate != null ? !collectionDate.equals(order.collectionDate) : order.collectionDate != null)
-            return false;
-        if (enteredDate != null ? !enteredDate.equals(order.enteredDate) : order.enteredDate != null)
-            return false;
-        if (firstName != null ? !firstName.equals(order.firstName) : order.firstName != null) return false;
-        if (lastName != null ? !lastName.equals(order.lastName) : order.lastName != null) return false;
-        if (middleName != null ? !middleName.equals(order.middleName) : order.middleName != null) return false;
-        if (source != null ? !source.equals(order.source) : order.source != null) return false;
-        if (stNumber != null ? !stNumber.equals(order.stNumber) : order.stNumber != null) return false;
-
-        return true;
+        return pendingTestCount == order.pendingTestCount &&
+                pendingValidationCount == order.pendingValidationCount &&
+                totalTestCount == order.totalTestCount &&
+                isPrinted == order.isPrinted &&
+                isCompleted == order.isCompleted &&
+                Objects.equals(accessionNumber, order.accessionNumber) &&
+                Objects.equals(uuid, order.uuid) &&
+                Objects.equals(orderId, order.orderId) &&
+                Objects.equals(stNumber, order.stNumber) &&
+                Objects.equals(firstName, order.firstName) &&
+                Objects.equals(middleName, order.middleName) &&
+                Objects.equals(lastName, order.lastName) &&
+                Objects.equals(source, order.source) &&
+                Objects.equals(collectionDate, order.collectionDate) &&
+                Objects.equals(enteredDate, order.enteredDate) &&
+                Objects.equals(comments, order.comments) &&
+                Objects.equals(sectionNames, order.sectionNames) &&
+                Objects.equals(sampleDate, order.sampleDate) &&
+                Objects.equals(orderDate, order.orderDate) &&
+                Objects.equals(sampleType, order.sampleType) &&
+                Objects.equals(priority, order.priority);
     }
 
     @Override
     public int hashCode() {
-        int result = accessionNumber != null ? accessionNumber.hashCode() : 0;
-        result = 31 * result + (stNumber != null ? stNumber.hashCode() : 0);
-        result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
-        result = 31 * result + (middleName != null ? middleName.hashCode() : 0);
-        result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-        result = 31 * result + (source != null ? source.hashCode() : 0);
-        result = 31 * result + pendingTestCount;
-        result = 31 * result + pendingValidationCount;
-        result = 31 * result + totalTestCount;
-        result = 31 * result + (collectionDate != null ? collectionDate.hashCode() : 0);
-        result = 31 * result + (enteredDate != null ? enteredDate.hashCode() : 0);
-        result = 31 * result + (isPrinted ? 1 : 0);
-        result = 31 * result + (isCompleted ? 1 : 0);
-        return result;
+        return Objects.hash(accessionNumber, uuid, orderId, stNumber, firstName, middleName, lastName, source,
+                pendingTestCount, pendingValidationCount, totalTestCount, collectionDate, isPrinted, isCompleted,
+                enteredDate, comments, sectionNames, sampleDate, orderDate, sampleType, priority);
     }
 
     public String getSectionNames() {
@@ -262,5 +256,21 @@ public class Order {
 
     public void setSampleDate(Date sampleDate){
          this.sampleDate =sampleDate;
+    }
+
+    public String getSampleType() {
+        return sampleType;
+    }
+
+    public void setSampleType(String sampleType) {
+        this.sampleType = sampleType;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 }
