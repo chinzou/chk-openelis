@@ -40,7 +40,7 @@ public class AnalysisDAOImplIT extends IT {
         DBHelper.createAndSaveAnalysis(enteredSampleItem, toBeValidatedAnalysisStatus, "Hematology", null, null);
         DBHelper.createAndSaveAnalysis(enteredSampleItem, toBeValidatedAnalysisStatus, "Hematology", null, null);
 
-        List<Analysis> actualAnalyses = new AnalysisDAOImpl().getAllAnalysisByAccessionNumberAndStatus(accessionNumber, Arrays.asList(toBeValidatedAnalysisStatus));
+        List<Analysis> actualAnalyses = new AnalysisDAOImpl().getAllAnalysisByAccessionNumberAndStatus(accessionNumber, Arrays.asList(toBeValidatedAnalysisStatus), "");
 
         Assert.assertTrue("analyses should have same accessionNumber", matchesAccessionNumberAndStatus(actualAnalyses, accessionNumber, toBeValidatedAnalysisStatus));
     }
@@ -54,7 +54,7 @@ public class AnalysisDAOImplIT extends IT {
         SampleItem nonMatchingSampleItem = DBHelper.createAndSaveSampleItem(nonMatchingAccessionNumberSample);
         DBHelper.createAndSaveAnalysis(nonMatchingSampleItem, toBeValidatedAnalysisStatus, "Hematology", null, null);
 
-        List<Analysis> actualAnalyses = new AnalysisDAOImpl().getAllAnalysisByAccessionNumberAndStatus(accessionNumber, Arrays.asList(toBeValidatedAnalysisStatus));
+        List<Analysis> actualAnalyses = new AnalysisDAOImpl().getAllAnalysisByAccessionNumberAndStatus(accessionNumber, Arrays.asList(toBeValidatedAnalysisStatus), "");
 
         Assert.assertTrue("should not return analysis with non matching accessionNumber", actualAnalyses.isEmpty());
     }
@@ -68,7 +68,7 @@ public class AnalysisDAOImplIT extends IT {
         DBHelper.createAndSaveAnalysis(nonMatchingSampleItem, nonMatchingStatus, "Hematology", null, null);
 
         List<Analysis> actualAnalyses = new AnalysisDAOImpl().getAllAnalysisByAccessionNumberAndStatus(accessionNumber,
-                Arrays.asList(StatusOfSampleUtil.AnalysisStatus.BiologistRejected));
+        Arrays.asList(StatusOfSampleUtil.AnalysisStatus.BiologistRejected), "");
 
         Assert.assertTrue("should not return analysis with non matching analysis status", actualAnalyses.isEmpty());
     }

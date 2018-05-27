@@ -468,6 +468,26 @@ public class SampleDAOImpl extends BaseDAOImpl implements SampleDAO {
 		return sample;
 	}
 
+	@Override
+	public Sample getSampleByAccessionNumberAndType(String accessionNumber, String sampleType) throws LIMSRuntimeException {
+		Sample sample = null;
+		try {
+			String sql = "select si.sample from SampleItem si inner join si.sample inner join si.typeOfSample where " +
+					"si.sample.accessionNumber = :accessionNumber and si.typeOfSample.localAbbreviation = :sampleType";
+			Query query = HibernateUtil.getSession().createQuery(sql);
+
+			query.setParameter("accessionNumber", accessionNumber);
+			query.setParameter("sampleType", sampleType);
+			List<Sample> list = query.list();
+			if ((list != null) && !list.isEmpty()) {
+				sample = list.get(0);
+			}
+		} catch (Exception e) {
+			throw new LIMSRuntimeException("Exception occurred in getSampleForAccessionNumber", e);
+		}
+		return sample;
+	}
+
 
 	public List getSamplesByStatusAndDomain(List statuses, String domain) throws LIMSRuntimeException {
 		List list = new Vector();

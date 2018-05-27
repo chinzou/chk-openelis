@@ -73,6 +73,7 @@ public class AccessionResultsAction extends BaseAction {
 
 	private String accessionNumber;
 	private Sample sample;
+	private String sampleType;
 	private InventoryUtility inventoryUtility = new InventoryUtility();
 	private static SampleDAO sampleDAO = new SampleDAOImpl();
 	private static UserModuleDAO userModuleDAO = new UserModuleDAOImpl();
@@ -104,6 +105,7 @@ public class AccessionResultsAction extends BaseAction {
 		if (GenericValidator.isBlankOrNull(newPage)) {
 
 			accessionNumber = request.getParameter("accessionNumber");
+			sampleType = request.getParameter("sampleType");
 			PropertyUtils.setProperty(dynaForm, "displayTestKit", false);
 
 			if (!GenericValidator.isBlankOrNull(accessionNumber)) {
@@ -133,7 +135,7 @@ public class AccessionResultsAction extends BaseAction {
 					Patient patient = getPatient();
 					resultsUtility.addIdentifingPatientInfo(patient, dynaForm);
 
-					List<TestResultItem> results = resultsUtility.getGroupedTestsForSample(sample);
+					List<TestResultItem> results = resultsUtility.getGroupedTestsForSample(sample, sampleType);
 
 					if (resultsUtility.inventoryNeeded()) {
 						addInventory(dynaForm);
@@ -268,7 +270,10 @@ public class AccessionResultsAction extends BaseAction {
 
 
     private void getSample() {
+	    if(sampleType == null)
         sample = sampleDAO.getSampleByAccessionNumber(accessionNumber);
+	    else
+	        sample = sampleDAO.getSampleByAccessionNumberAndType(accessionNumber, sampleType);
     }
 
     protected String getPageTitleKey() {
