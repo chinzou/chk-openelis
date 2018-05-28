@@ -1407,7 +1407,7 @@ public class AnalysisDAOImpl extends BaseDAOImpl implements AnalysisDAO {
 		}
 		String sql = "From Analysis a where a.sampleItem.sample.accessionNumber = :accessionNumber and a.statusId IN (:statusIdList)";
 
-		if (sampleType != null)
+		if (StringUtils.isNotEmpty(sampleType))
 			sql += " and a.sampleItem.typeOfSample.localAbbreviation= :sampleType";
 
 		try {
