@@ -303,7 +303,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         for (OpenMRSOrder labOrder : labOrders) {
             String commentToFulfiller = labOrder.getCommentToFulfiller();
             String visitType = StringUtils.substringBetween(commentToFulfiller, "[[ ", " ]]");
-            String comment = commentToFulfiller == null ? "" : commentToFulfiller.replaceFirst("\\[\\[.*\\]\\]\\s*", "");
+            String comment = commentToFulfiller == null ? null : commentToFulfiller.replaceFirst("\\[\\[.*\\]\\]\\s*", "");
             labOrder.setVisitType(StringUtils.isEmpty(visitType) ? null : visitType);
             labOrder.setCommentToFulfiller(comment);
         }
