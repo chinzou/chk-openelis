@@ -180,6 +180,9 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         setVisitTypeForOrders(labOrders);
         String encounterUuid = openMRSEncounter.getEncounterUuid();
 
+
+//        createSamples(openMRSEncounter, ordersBySampleType, processState);
+
         for (String sampleType : ordersBySampleType.keySet()) {
             Sample sample = sampleDAO.getSampleByUuidAndSampleTypeIdAndWithoutAccessionNumber(encounterUuid, sampleType);
             List<OpenMRSOrder> orders = ordersBySampleType.get(sampleType);
@@ -189,6 +192,49 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             else
                 createSample(openMRSEncounter, processState, sysUserId, orders);
         }
+
+        List<Sample> samplesByEncounterUuid = sampleDAO.getSamplesByEncounterUuid(encounterUuid);
+
+        if(ordersBySampleType.size() != samplesByEncounterUuid.size()) {
+            List<Integer> sampleTypeIdsAsIntegers = getSampleTypeIds(ordersBySampleType.keySet());
+            for (Sample sample : samplesByEncounterUuid) {
+                if (!sampleItemDAO.isTypeOfSampleAndSampleExists(sample.getId(), sampleTypeIdsAsIntegers)) {
+                    updateSample(openMRSEncounter, sample, processState, sysUserId, new ArrayList<OpenMRSOrder>());
+                }
+            }
+        }
+
+    }
+
+    private List<Integer> getSampleTypeIds(Set<String> stringList) {
+        List<Integer> ids = new ArrayList<>();
+        try {
+            for (String string : stringList) {
+                ids.add(Integer.parseInt(string));
+            }
+        }
+        catch (Exception e) {
+            logger.warn(e.getMessage(), e);
+        }
+
+        return   ids;
+    }
+
+    private void createSamples(OpenMRSEncounter openMRSEncounter, HashMap<String, List<OpenMRSOrder>> ordersBySampleType, FeedProcessState processState){
+        String sysUserId = auditingService.getSysUserId();
+        String encounterUuid = openMRSEncounter.getEncounterUuid();
+
+        for (String sampleType : ordersBySampleType.keySet()) {
+            Sample sample = sampleDAO.getSampleByUuidAndSampleTypeIdAndWithoutAccessionNumber(encounterUuid, sampleType);
+
+            if(sample == null){
+                createSample(openMRSEncounter, processState, sysUserId, ordersBySampleType.get(sampleType));
+            }
+        }
+    }
+
+    private void updateSamples(){
+
     }
 
     private HashMap<String, List<OpenMRSOrder>> groupOrdersBySampleType(List<OpenMRSOrder> orders) {
