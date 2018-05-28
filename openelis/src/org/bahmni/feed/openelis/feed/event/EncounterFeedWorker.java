@@ -174,21 +174,21 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
     public void process(OpenMRSEncounter openMRSEncounter) {
         logInfo(openMRSEncounter);
         FeedProcessState processState = new FeedProcessState();
+
+        String sysUserId = auditingService.getSysUserId();
+        filterNewTestsAdded(openMRSEncounter, sysUserId);
+
         List<OpenMRSOrder> labOrders = openMRSEncounter.getLabOrders();
         HashMap<String, List<OpenMRSOrder>> ordersBySampleType = groupOrdersBySampleType(labOrders);
-        String sysUserId = auditingService.getSysUserId();
         setVisitTypeForOrders(labOrders);
         String encounterUuid = openMRSEncounter.getEncounterUuid();
-
-
-//        createSamples(openMRSEncounter, ordersBySampleType, processState);
 
         for (String sampleType : ordersBySampleType.keySet()) {
             Sample sample = sampleDAO.getSampleByUuidAndSampleTypeIdAndWithoutAccessionNumber(encounterUuid, sampleType);
             List<OpenMRSOrder> orders = ordersBySampleType.get(sampleType);
 
             if (sample != null)
-                updateSample(openMRSEncounter, sample, processState, sysUserId, orders);
+                updateSample(sample, processState, sysUserId, orders);
             else
                 createSample(openMRSEncounter, processState, sysUserId, orders);
         }
@@ -199,7 +199,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             List<Integer> sampleTypeIdsAsIntegers = getSampleTypeIds(ordersBySampleType.keySet());
             for (Sample sample : samplesByEncounterUuid) {
                 if (!sampleItemDAO.isTypeOfSampleAndSampleExists(sample.getId(), sampleTypeIdsAsIntegers)) {
-                    updateSample(openMRSEncounter, sample, processState, sysUserId, new ArrayList<OpenMRSOrder>());
+                    updateSample(sample, processState, sysUserId, new ArrayList<OpenMRSOrder>());
                 }
             }
         }
@@ -218,23 +218,6 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         }
 
         return   ids;
-    }
-
-    private void createSamples(OpenMRSEncounter openMRSEncounter, HashMap<String, List<OpenMRSOrder>> ordersBySampleType, FeedProcessState processState){
-        String sysUserId = auditingService.getSysUserId();
-        String encounterUuid = openMRSEncounter.getEncounterUuid();
-
-        for (String sampleType : ordersBySampleType.keySet()) {
-            Sample sample = sampleDAO.getSampleByUuidAndSampleTypeIdAndWithoutAccessionNumber(encounterUuid, sampleType);
-
-            if(sample == null){
-                createSample(openMRSEncounter, processState, sysUserId, ordersBySampleType.get(sampleType));
-            }
-        }
-    }
-
-    private void updateSamples(){
-
     }
 
     private HashMap<String, List<OpenMRSOrder>> groupOrdersBySampleType(List<OpenMRSOrder> orders) {
@@ -261,9 +244,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         return ordersGroup;
     }
 
-    private void updateSample(OpenMRSEncounter openMRSEncounter, Sample sample, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
-        //Remove all those tests for which the sample has been collected already.
-        filterNewTestsAdded(openMRSEncounter, sysUserId);
+    private void updateSample(Sample sample, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
         updateSamplePriority(sample, orders);
         Date nowAsSqlDate = DateUtil.getNowAsSqlDate();
 
@@ -282,7 +263,6 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
     }
 
     private void createSample(OpenMRSEncounter openMRSEncounter, FeedProcessState processState, String sysUserId, List<OpenMRSOrder> orders) {
-        filterNewTestsAdded(openMRSEncounter, sysUserId);
         if (!openMRSEncounter.hasLabOrder() || isEmpty(openMRSEncounter.getLabOrders())) {
             return;
         }
@@ -431,7 +411,6 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
 
         for (TestOrder testOrder : testOrderDiff.getTestsIntersection()) {
             commentsMapOfTestIntersection.put(Integer.parseInt(testOrder.getTest().getId()), testOrder);
-
         }
 
         List<Analysis> analysisToBeUpdated = analysisDAO.getAnalysisBySampleAndTestIds(sample.getId(), new ArrayList<Integer>(commentsMapOfTestIntersection.keySet()));
@@ -440,10 +419,8 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
             analysis.setSysUserId(sysUserId);
             analysis.setComment(commentsMapOfTestIntersection.get(Integer.valueOf(analysis.getTest().getId())).getComment());
             analysisDAO.updateData(analysis);
-
         }
     }
-
 
     private void setCorrectPanelIdForUnchangedTests(Sample sample, String sysUserId, AnalysisBuilder analysisBuilder, TestOrderDiff testOrderDiff) {
         List<Analysis> analysesIntersection = analysisDAO.getAnalysesBySampleIdExcludedByStatusId(sample.getId(), getCancelledAnalysisStatusIds());
@@ -473,7 +450,6 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         }
 
         cleanUpDanglingItems(sample,sysUserId);
-
     }
 
     private void cleanUpDanglingItems(Sample sample,String sysUserId) {
