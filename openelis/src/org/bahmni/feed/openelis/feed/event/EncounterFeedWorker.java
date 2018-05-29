@@ -198,7 +198,7 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         if(ordersBySampleType.size() != samplesByEncounterUuid.size()) {
             List<Integer> sampleTypeIdsAsIntegers = getSampleTypeIds(ordersBySampleType.keySet());
             for (Sample sample : samplesByEncounterUuid) {
-                if (!sampleItemDAO.isTypeOfSampleAndSampleExists(sample.getId(), sampleTypeIdsAsIntegers)) {
+                if (StringUtils.isEmpty(sample.getAccessionNumber()) && !sampleItemDAO.isTypeOfSampleAndSampleExists(sample.getId(), sampleTypeIdsAsIntegers)) {
                     updateSample(sample, processState, sysUserId, new ArrayList<OpenMRSOrder>());
                 }
             }
@@ -206,18 +206,18 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
 
     }
 
-    private List<Integer> getSampleTypeIds(Set<String> stringList) {
+    private List<Integer> getSampleTypeIds(Set<String> sampleIds) {
         List<Integer> ids = new ArrayList<>();
         try {
-            for (String string : stringList) {
-                ids.add(Integer.parseInt(string));
+            for (String id : sampleIds) {
+                ids.add(Integer.parseInt(id));
             }
         }
         catch (Exception e) {
             logger.warn(e.getMessage(), e);
         }
 
-        return   ids;
+        return ids;
     }
 
     private HashMap<String, List<OpenMRSOrder>> groupOrdersBySampleType(List<OpenMRSOrder> orders) {
