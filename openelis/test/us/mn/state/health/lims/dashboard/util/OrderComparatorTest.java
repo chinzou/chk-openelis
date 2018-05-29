@@ -98,7 +98,7 @@ public class OrderComparatorTest {
         assertEquals("18122017-003", orderList.get(3).getAccessionNumber());
     }
 
-    private Order createOrder(String accessionNumber, String uuid, String stNumber, String firstName, String lastName, Date enteredDate, String comments, boolean isCompleted, String sampleType, String priority) {
+    private Order createOrder(String accessionNumber, String uuid, String stNumber, String firstName, String lastName, Date enteredDate, String priority, boolean isCompleted, String sampleType, String comments) {
         return new Order(accessionNumber, uuid, null,
                 stNumber, firstName, null, lastName, null, isCompleted,
                 false, 1, 1, 1, null,

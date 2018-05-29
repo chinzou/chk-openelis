@@ -286,7 +286,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "sample_source.name AS sample_source, \n" +
                 "sample.priority AS priority,\n" +
                 "sample.visit_type AS visit_type, \n" +
-                "type_of_sample.local_abbrev AS sample_type, \n" +
+                "type_of_sample.description AS sample_type, \n" +
                 "SUM(CASE WHEN  analysis.status_id IN (" + getPendingAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_tests_count,\n" +
                 "SUM(CASE WHEN  analysis.status_id IN ("+ getPendingValidationAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_validation_count,\n" +
                 "string_agg(nullif(analysis.comment, ''), '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
@@ -306,7 +306,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null\n" +
                 "WHERE "+condition+"\n" +
-                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name,sample.lastupdated, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time, type_of_sample.local_abbrev\n" +
+                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, person.first_name,sample.lastupdated, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time, type_of_sample.description\n" +
                 "ORDER BY "+ OrderBy +"\n" +
                 "LIMIT 1000;";
     }
@@ -328,7 +328,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "sample_source.name AS sample_source, \n" +
                 "sample.priority AS priority,\n" +
                 "sample.visit_type AS visit_type, \n" +
-                "type_of_sample.local_abbrev AS sample_type, \n" +
+                "type_of_sample.description AS sample_type, \n" +
                 "SUM(CASE WHEN  analysis.status_id IN (" + getPendingAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_tests_count,\n" +
                 "SUM(CASE WHEN  analysis.status_id IN ("+ getPendingValidationAnalysisStatus() + ") THEN 1 ELSE 0 END) as pending_validation_count,\n" +
                 "string_agg(nullif(analysis.comment, ''), '" + COMMENT_SEPARATOR + "') AS analysis_comments,\n" +
@@ -358,7 +358,7 @@ public class OrderListDAOImpl implements OrderListDAO {
                 "INNER JOIN test_section ON test.test_section_id = test_section.id \n"+
                 "LEFT OUTER JOIN document_track as document_track ON sample.id = document_track.row_id AND document_track.name = 'patientHaitiClinical' and document_track.parent_id is null \n" +
                 "WHERE "+condition+"\n" +
-                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, sample.lastupdated, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time, type_of_sample.local_abbrev \n" +
+                "GROUP BY sample.accession_number, sample.uuid,sample.id, sample.collection_date, sample.lastupdated, person.first_name, person.middle_name, person.last_name, sample_source.name, patient_identity.identity_data, document_track.report_generation_time, type_of_sample.description \n" +
                 "ORDER BY "+ OrderBy +" DESC\n" +
                 "LIMIT 1000;";
     }

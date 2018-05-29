@@ -340,6 +340,8 @@ public class SampleItemDAOImpl extends BaseDAOImpl implements SampleItemDAO {
 
 	@Override
 	public boolean isTypeOfSampleAndSampleExists(String sampleId, List<Integer> typeOfSampleIds) {
+		if (typeOfSampleIds.size() == 0)
+			return false;
 		try {
 			String sql = "from SampleItem sampleItem where sampleItem.sample.id = :sampleId and sampleItem.typeOfSample in ( :typeOfSampleIds )";
 			Query query = HibernateUtil.getSession().createQuery(sql);
