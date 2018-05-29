@@ -225,7 +225,7 @@ public class ResultsValidationUtility {
     }
 
     public List<AnalysisItem> getResultValidationListByAccessionNumber(List<AnalysisStatus> statusList, String accessionNumber, String sampleType) {
-        List<Analysis> analysisList = analysisDAO.getAllAnalysisByAccessionNumberAndStatus(accessionNumber, statusList, sampleType);
+        List<Analysis> analysisList = analysisDAO.getAllAnalysisByAccessionNumberAndStatusAndSampleType(accessionNumber, statusList, sampleType);
         List<ResultValidationItem> groupedTestsForAnalysisList = getGroupedTestsForAnalysisList(analysisList, !StatusRules.useRecordStatusForValidation());
         return testResultListToAnalysisItemList(groupedTestsForAnalysisList);
     }
