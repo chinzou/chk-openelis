@@ -462,7 +462,7 @@ public class AnalysisDAOImpl extends BaseDAOImpl implements AnalysisDAO {
 		try {
 			String sql = "from Analysis a where a.sampleItem.sample.id  in (:sampleIds)";
 
-			if(sampleType != null)
+			if(StringUtils.isNotEmpty(sampleType))
 				sql += " and a.sampleItem.typeOfSample.localAbbreviation= :sampleType";
 
 			if(!excludedAnalysisStatus.isEmpty()) {
@@ -1401,7 +1401,7 @@ public class AnalysisDAOImpl extends BaseDAOImpl implements AnalysisDAO {
 	}
 
 	@Override
-	public List<Analysis> getAllAnalysisByAccessionNumberAndStatus(String accessionNumber, List<StatusOfSampleUtil.AnalysisStatus> analysisStatuses, String sampleType) {
+	public List<Analysis> getAllAnalysisByAccessionNumberAndStatusAndSampleType(String accessionNumber, List<StatusOfSampleUtil.AnalysisStatus> analysisStatuses, String sampleType) {
 		if (GenericValidator.isBlankOrNull(accessionNumber) || analysisStatuses == null || analysisStatuses.isEmpty()) {
 			return new ArrayList<>();
 		}
@@ -1418,7 +1418,7 @@ public class AnalysisDAOImpl extends BaseDAOImpl implements AnalysisDAO {
 				query.setParameter("sampleType", sampleType);
 			return query.list();
 		} catch (HibernateException e) {
-			handleException(e, "getAllAnalysisByAccessionNumberAndStatus");
+			handleException(e, "getAllAnalysisByAccessionNumberAndStatusAndSampleType");
 		}
 		return null;
 	}
