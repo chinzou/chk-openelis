@@ -176,11 +176,11 @@ public class EncounterFeedWorker extends OpenElisEventWorker {
         FeedProcessState processState = new FeedProcessState();
 
         String sysUserId = auditingService.getSysUserId();
-        filterNewTestsAdded(openMRSEncounter, sysUserId);
 
-        List<OpenMRSOrder> labOrders = openMRSEncounter.getLabOrders();
-        HashMap<String, List<OpenMRSOrder>> ordersBySampleType = groupOrdersBySampleType(labOrders);
-        setVisitTypeForOrders(labOrders);
+        setVisitTypeForOrders(openMRSEncounter.getLabOrders());
+        filterNewTestsAdded(openMRSEncounter, sysUserId);
+        HashMap<String, List<OpenMRSOrder>> ordersBySampleType = groupOrdersBySampleType(openMRSEncounter.getLabOrders());
+
         String encounterUuid = openMRSEncounter.getEncounterUuid();
 
         for (String sampleType : ordersBySampleType.keySet()) {
