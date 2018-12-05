@@ -314,7 +314,7 @@ public class ResultsLoadUtility {
             }
         }
 
-        new SortByAccessionNumberAndSequence().sort(selectedTestList, forwardSort);
+        new SortBySampleCollectionDateAndAccessionNumber().sort(selectedTestList, forwardSort);
 
         setSampleGroupingNumbers(selectedTestList);
         addUserSelectionReflexes(selectedTestList);
@@ -558,11 +558,13 @@ public class ResultsLoadUtility {
                         testList.add(selectedItem);
                     }
                 }
-        new SortBySampleCollectionDate().sort(testList, forwardSort);
+        new SortBySampleCollectionDateAndAccessionNumber().sort(testList, forwardSort);
         setSampleGroupingNumbers(testList);
         addUserSelectionReflexes(testList);
+
         TestResultItem[] testArray = new TestResultItem[testList.size()];
         testList.toArray(testArray);
+
         return testArray;
     }
 
