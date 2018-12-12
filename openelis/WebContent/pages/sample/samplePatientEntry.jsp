@@ -122,6 +122,9 @@ $jq(function() {
         $('<%= fieldsetOrder.get(0) +"Display" %>').show();
 
         $('addEditPatient').hide();
+        $('saveAndRedirectColumn').show();
+        $('saveAndRedirectButtonId').value='<bean:message key="label.button.saveAndAddPatient"/>';
+
 	if(sampleId != "null") {
 		getSampleOrderDetailsFromSampleId(sampleId, processSampleOrderDetailsSuccess, processSampleOrderDetailsFailure);
 	}

@@ -146,6 +146,10 @@ var updateStatus = "add";
 var patientInfoChangeListeners = new Array();
 var dirty = false;
 
+$jq(function() {
+    $('saveAndRedirectColumn').show();
+});
+
 function  /*bool*/ pt_isFieldValid(fieldname)
 {
 	return pt_invalidElements.indexOf(fieldname) == -1;
@@ -212,6 +216,7 @@ function /*void*/ pt_setSave()
 		setSave();
 	}else{
 		$("saveButtonId").disabled = !patientFormValid();
+        $("saveAndRedirectButtonId").disabled = !patientFormValid();
 	}
 }
 
@@ -753,6 +758,7 @@ function clearDynamicAddresses(){
 function  /*void*/ savePage()
 {
     jQuery("#saveButtonId").attr("disabled", "disabled");
+    jQuery("#saveAndRedirectButtonId").attr("disabled", "disabled");
     window.onbeforeunload = null; // Added to flag that formWarning alert isn't needed.
     var form = window.document.forms[0];
 	if (supportSTNumber) {

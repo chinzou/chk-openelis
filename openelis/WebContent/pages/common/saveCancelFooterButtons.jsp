@@ -9,7 +9,7 @@
 	String saveDisabled = (String) request.getSession().getAttribute(IActionConstants.SAVE_DISABLED);
 %>
 
-	<table border="0" cellpadding="0" cellspacing="4" width="100%" class="block-bottom">
+	<table id="buttonTable" border="0" cellpadding="0" cellspacing="4" width="10%" class="block-bottom">
 		<tbody valign="middle">
 			<tr>
 				<td align="right">
@@ -21,12 +21,21 @@
 						<bean:message key="label.button.save" />
 					</html:button>
 				</td>
+
+				<td id ="saveAndRedirectColumn" style="display:none;">
+					<html:button
+						property="saveAndRedirect"
+						styleId="saveAndRedirectButtonId"
+						disabled="<%=Boolean.valueOf(saveDisabled).booleanValue()%>">
+						<bean:message key="label.button.saveAndAddSample" />
+					</html:button>
+				</td>
+
 				<td>
 					<html:button
 						onclick="setMyCancelAction(window.document.forms[0], 'Cancel', 'no', '');"
 						property="cancel"
-						styleId="cancelButtonId"
-						>
+						styleId="cancelButtonId">
 						<bean:message key="label.button.cancel" />
 					</html:button>
 				</td>
