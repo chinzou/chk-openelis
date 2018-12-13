@@ -544,30 +544,51 @@ function /*void*/ makeDirty(){
 	window.onbeforeunload = formWarning;
 }
 
-function  /*void*/ savePage()
-{
+function savePageHelper() {
     jQuery("#saveButtonId").attr("disabled", "disabled");
-	loadSamples(); //in addSample tile
+    jQuery("#saveAndRedirectButtonId").attr("disabled", "disabled");
+    loadSamples(); //in addSample tile
     window.onbeforeunload = null; // Added to flag that formWarning alert isn't needed.
     var form = window.document.forms[0];
-	if (supportSTNumber) {
-		form.elements.namedItem("patientProperties.STnumber").value = $('ST_ID').value;
-	}
-	if(sampleId != "null"){
-		var accessionNumber = $("labNo").value
-		var rows = $jq('#samplesAddedTable tr');
-		var testIdsSelected = new Object();
-		var typeIdsSelected = new Object();
-		for (var i=1; i<rows.length; i++){
-			testIdsSelected[i-1]=$jq('#testIds'+rows[i].id).val();
-			typeIdsSelected[i-1] =$jq('#typeId'+rows[i].id).val();
-		}
-		var testsAndTypes = new Object();
-		testsAndTypes.tests = testIdsSelected;
-		testsAndTypes.types = typeIdsSelected;
-		var typeAndTestIdsJson = JSON.stringify(testsAndTypes);
+    if (supportSTNumber) {
+        form.elements.namedItem("patientProperties.STnumber").value = $('ST_ID').value;
+    }
+    return form;
+}
 
-		updateTestsWithAccessionNumber(accessionNumber, sampleId, typeAndTestIdsJson, successUpdateAccession, processScanFailure)
+function setTestsWithAccessionNumber() {
+    var accessionNumber = $("labNo").value
+    var rows = $jq('#samplesAddedTable tr');
+    var testIdsSelected = new Object();
+    var typeIdsSelected = new Object();
+    for (var i = 1; i < rows.length; i++) {
+        testIdsSelected[i - 1] = $jq('#testIds' + rows[i].id).val();
+        typeIdsSelected[i - 1] = $jq('#typeId' + rows[i].id).val();
+    }
+    var testsAndTypes = new Object();
+    testsAndTypes.tests = testIdsSelected;
+    testsAndTypes.types = typeIdsSelected;
+    var typeAndTestIdsJson = JSON.stringify(testsAndTypes);
+
+    updateTestsWithAccessionNumber(accessionNumber, sampleId, typeAndTestIdsJson, successUpdateAccession, processScanFailure);
+}
+
+function  /*void*/ saveAndRedirectPage(){
+    var form = savePageHelper();
+    if(sampleId != "null"){
+        setTestsWithAccessionNumber();
+        form.action = "SamplePatientEntrySaveAndRedirect.do?";
+    }else {
+        form.action = "ExternalSamplePatientEntrySaveAndRedirect.do";
+    }
+    form.submit();
+}
+
+function  /*void*/ savePage()
+{
+    var form = savePageHelper();
+	if(sampleId != "null"){
+        setTestsWithAccessionNumber();
 		form.action = "LabDashboard.do?";
 	}else {
 		form.action = "SamplePatientEntrySave.do";
@@ -581,8 +602,11 @@ function /*void*/ setSave()
 	var validToSave =  patientFormValid() && sampleEntryTopValid();
     if (validToSave) {
         jQuery("#saveButtonId").removeAttr("disabled", "disabled");
+        jQuery("#saveAndRedirectButtonId").removeAttr("disabled", "disabled");
+
     } else {
         jQuery("#saveButtonId").attr("disabled", "disabled");
+        jQuery("#saveAndRedirectButtonId").attr("disabled", "disabled");
     }
 }
 

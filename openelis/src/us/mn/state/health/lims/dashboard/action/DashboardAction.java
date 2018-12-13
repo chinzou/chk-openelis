@@ -66,7 +66,7 @@ public class DashboardAction extends BaseAction {
         dynaForm.set("todaySampleNotCollectedList", escapedTodaySampleNotCollectedListJson);
         dynaForm.set("backlogSampleNotCollectedList", escapedBacklogSampleNotCollectedListJson);
         dynaForm.set("backlogOrderList", escapedBacklogOrderListJson);
-
+        setSuccessFlag(request, "success");
         return mapping.findForward("success");
     }
 

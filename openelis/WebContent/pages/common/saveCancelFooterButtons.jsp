@@ -23,7 +23,7 @@
 				</td>
 
 				<td id ="saveAndRedirectColumn" style="display:none;">
-					<html:button
+					<html:button onclick="saveAndRedirectPage();"
 						property="saveAndRedirect"
 						styleId="saveAndRedirectButtonId"
 						disabled="<%=Boolean.valueOf(saveDisabled).booleanValue()%>">
