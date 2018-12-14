@@ -757,15 +757,28 @@ function clearDynamicAddresses(){
 
 function  /*void*/ savePage()
 {
+    var form = savePageHelper();
+	form.action = "PatientManagementUpdate.do";
+	form.submit();
+}
+
+function savePageHelper() {
     jQuery("#saveButtonId").attr("disabled", "disabled");
     jQuery("#saveAndRedirectButtonId").attr("disabled", "disabled");
     window.onbeforeunload = null; // Added to flag that formWarning alert isn't needed.
     var form = window.document.forms[0];
-	if (supportSTNumber) {
-		form.elements.namedItem("patientProperties.STnumber").value = $('ST_ID').value;
-	}
-	form.action = "PatientManagementUpdate.do";
-	form.submit();
+    if (supportSTNumber) {
+        form.elements.namedItem("patientProperties.STnumber").value = $('ST_ID').value;
+    }
+    return form;
+}
+
+function /*void*/ saveAndRedirectPage()
+{
+    setUpdateStatus(updateStatus+"Redirect");
+    var form = savePageHelper();
+    form.action = "PatientManagementUpdateAndRedirect.do";
+    form.submit();
 }
 
 function /*void*/ addPatientInfoChangedListener( listener ){

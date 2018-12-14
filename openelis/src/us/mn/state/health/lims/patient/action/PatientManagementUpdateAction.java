@@ -23,6 +23,7 @@ import org.apache.struts.Globals;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.apache.struts.action.ActionRedirect;
 import org.apache.struts.action.ActionMessages;
 import org.hibernate.StaleObjectStateException;
 import us.mn.state.health.lims.address.dao.AddressPartDAO;
@@ -84,10 +85,8 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
     private static String ADDRESS_PART_DEPT_ID;
 
     public static enum PatientUpdateStatus {
-        NO_ACTION, UPDATE, ADD
-    }
-
-    ;
+        NO_ACTION, UPDATE, ADD, ADD_REDIRECT, UPDATE_REDIRECT
+    };
 
     static {
         AddressPartDAO addressPartDAO = new AddressPartDAOImpl();
@@ -149,9 +148,13 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
                 dynaForm.initialize(mapping);
             }
         }
+        if(patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT){
+            ActionRedirect redirect = new ActionRedirect(mapping.findForward(forward));
+            redirect.addParameter("patientId", patientInfo.getSTnumber());
+            return redirect;
+        }
 
         setSuccessFlag(request, forward);
-
         return mapping.findForward(forward);
     }
 
@@ -185,7 +188,7 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
 
         initMembers();
 
-        if (patientUpdateStatus == PatientUpdateStatus.UPDATE) {
+        if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus==PatientUpdateStatus.UPDATE_REDIRECT) {
             loadForUpdate(patientInfo);
         }
 
@@ -242,8 +245,13 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
             patientUpdateStatus = PatientUpdateStatus.NO_ACTION;
         } else if (status.equals("update")) {
             patientUpdateStatus = PatientUpdateStatus.UPDATE;
-        } else {
+        } else if (status.equals("add")){
             patientUpdateStatus = PatientUpdateStatus.ADD;
+        }else if (status.equals("addRedirect")){
+            patientUpdateStatus = PatientUpdateStatus.ADD_REDIRECT;
+        }
+        else{
+            patientUpdateStatus = PatientUpdateStatus.UPDATE_REDIRECT;
         }
     }
 
@@ -277,18 +285,18 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
     public void persistPatientData(PatientManagmentInfo patientInfo, String contextPath) throws LIMSRuntimeException {
         PersonDAO personDAO = new PersonDAOImpl();
 
-        if (patientUpdateStatus == PatientUpdateStatus.ADD) {
+        if (patientUpdateStatus == PatientUpdateStatus.ADD || patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT) {
             personDAO.insertData(person);
-        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE) {
+        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT) {
             personDAO.updateData(person);
         }
 
         patient.setPerson(person);
         String uuid = UUID.randomUUID().toString();
-        if (patientUpdateStatus == PatientUpdateStatus.ADD) {
+        if (patientUpdateStatus == PatientUpdateStatus.ADD || patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT) {
             patient.setUuid(uuid);
             patientDAO.insertData(patient);
-        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE) {
+        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT) {
             patientDAO.updateData(patient);
         }
 
@@ -412,7 +420,7 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
         Boolean newIdentityNeeded = true;
         String typeID = PatientIdentityTypeMap.getInstance().getIDForType(type);
 
-        if (patientUpdateStatus == PatientUpdateStatus.UPDATE) {
+        if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT ) {
 
             for (PatientIdentity listIdentity : patientIdentities) {
                 if (listIdentity.getIdentityTypeId().equals(typeID)) {

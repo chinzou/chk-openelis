@@ -1055,9 +1055,14 @@
         </action>
 
         <action path="/PatientManagementUpdate" name="samplePatientEntryForm"
-                type="us.mn.state.health.lims.patient.action.PatientManagementUpdateAction" validate="false"
-                >
+                type="us.mn.state.health.lims.patient.action.PatientManagementUpdateAction" validate="false">
             <forward name="success" path="patientManagementDefinition"/>
+            <forward name="fail" path="patientManagementDefinition"/>
+        </action>
+
+        <action path="/PatientManagementUpdateAndRedirect" name="samplePatientEntryForm"
+                type="us.mn.state.health.lims.patient.action.PatientManagementUpdateAction" validate="false">
+            <forward name="success" path="/SamplePatientEntry.do" redirect="true"/>
             <forward name="fail" path="patientManagementDefinition"/>
         </action>
 
@@ -1568,7 +1573,7 @@
 
         <action path="/SamplePatientEntrySaveAndRedirect" name="LabDashboardForm"
                 type="us.mn.state.health.lims.dashboard.action.DashboardAction">
-            <forward name="success" path="/PatientManagement.do"/>
+            <forward name="success" path="/PatientManagement.do" redirect="true"/>
         </action>
 
         <action path="/rest/**" name="WebServiceForm" type="us.mn.state.health.lims.ws.ResourceRetrieveAction" validate="false">

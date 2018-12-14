@@ -42,6 +42,7 @@
 	IAccessionNumberValidator accessionNumberValidator;
     Map<String,String> fieldsetToJspMap = new HashMap<String, String>() ;
 	String sampleId = "";
+	String patientId = "";
 
 %>
 <%
@@ -60,6 +61,8 @@
     fieldsetToJspMap.put("samples","SamplePatientSampleSection.jsp");
     fieldsetToJspMap.put("order","SampleOrderInfoSection.jsp");
 	sampleId = request.getParameter("id");
+	patientId = request.getParameter("patientId");
+
 %>
 
 <script type="text/javascript" src="<%=basePath%>scripts/utilities.js?ver=<%= Versioning.getBuildNumber() %>" ></script>
@@ -87,6 +90,7 @@ var dirty = false;
 var invalidSampleElements = new Array();
 var requiredFields = new Array("labNo", "receivedDateForDisplay" );
 var sampleId = "<%= sampleId %>";
+var patientId = "<%= patientId%>";
 
 if( requesterLastNameRequired ){
 	requiredFields.push("providerLastNameID");
@@ -131,6 +135,10 @@ $jq(function() {
 	else{
 		getDefaultSampleSource(processDefaultSampleSourceSuccess)
 	}
+
+    if(patientId != "null") {
+        patientSearch(null, null, null, patientId, null, null, null, processSearchSuccess, processSearchFailure);
+    }
 
 });
 
