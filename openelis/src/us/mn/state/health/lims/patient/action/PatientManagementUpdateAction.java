@@ -148,14 +148,23 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
                 dynaForm.initialize(mapping);
             }
         }
-        if(patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT){
-            ActionRedirect redirect = new ActionRedirect(mapping.findForward(forward));
-            redirect.addParameter("patientId", patientInfo.getSTnumber());
-            return redirect;
-        }
-
         setSuccessFlag(request, forward);
-        return mapping.findForward(forward);
+        return isPatientUpdateStatusAddRedirect() || isPatientUpdateStatusUpdateRedirect() ?
+                redirectToAddSample(mapping, forward, patientInfo) : mapping.findForward(forward);
+    }
+
+    private ActionForward redirectToAddSample(ActionMapping mapping, String forward, PatientManagmentInfo patientInfo) {
+        ActionRedirect redirect = new ActionRedirect(mapping.findForward(forward));
+        redirect.addParameter("patientId", patientInfo.getSTnumber());
+        return redirect;
+    }
+
+    private boolean isPatientUpdateStatusAddRedirect() {
+        return patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT;
+    }
+
+    private boolean isPatientUpdateStatusUpdateRedirect() {
+        return patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT;
     }
 
     private ActionForward addErrorMessageAndForward(ActionMapping mapping, HttpServletRequest request, ActionError error) {
@@ -188,7 +197,7 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
 
         initMembers();
 
-        if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus==PatientUpdateStatus.UPDATE_REDIRECT) {
+        if (patientUpdateStatus == PatientUpdateStatus.UPDATE || isPatientUpdateStatusUpdateRedirect()) {
             loadForUpdate(patientInfo);
         }
 
@@ -285,18 +294,18 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
     public void persistPatientData(PatientManagmentInfo patientInfo, String contextPath) throws LIMSRuntimeException {
         PersonDAO personDAO = new PersonDAOImpl();
 
-        if (patientUpdateStatus == PatientUpdateStatus.ADD || patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT) {
+        if (patientUpdateStatus == PatientUpdateStatus.ADD || isPatientUpdateStatusAddRedirect()) {
             personDAO.insertData(person);
-        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT) {
+        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE || isPatientUpdateStatusUpdateRedirect()) {
             personDAO.updateData(person);
         }
 
         patient.setPerson(person);
         String uuid = UUID.randomUUID().toString();
-        if (patientUpdateStatus == PatientUpdateStatus.ADD || patientUpdateStatus == PatientUpdateStatus.ADD_REDIRECT) {
+        if (patientUpdateStatus == PatientUpdateStatus.ADD || isPatientUpdateStatusAddRedirect()) {
             patient.setUuid(uuid);
             patientDAO.insertData(patient);
-        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT) {
+        } else if (patientUpdateStatus == PatientUpdateStatus.UPDATE || isPatientUpdateStatusUpdateRedirect()) {
             patientDAO.updateData(patient);
         }
 
@@ -420,7 +429,7 @@ public class PatientManagementUpdateAction extends BaseAction implements IPatien
         Boolean newIdentityNeeded = true;
         String typeID = PatientIdentityTypeMap.getInstance().getIDForType(type);
 
-        if (patientUpdateStatus == PatientUpdateStatus.UPDATE || patientUpdateStatus == PatientUpdateStatus.UPDATE_REDIRECT ) {
+        if (patientUpdateStatus == PatientUpdateStatus.UPDATE || isPatientUpdateStatusUpdateRedirect() ) {
 
             for (PatientIdentity listIdentity : patientIdentities) {
                 if (listIdentity.getIdentityTypeId().equals(typeID)) {
