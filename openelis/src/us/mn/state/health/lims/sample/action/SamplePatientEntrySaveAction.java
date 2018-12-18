@@ -101,6 +101,7 @@ import java.util.UUID;
 
 import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 import static us.mn.state.health.lims.common.util.DateUtil.getCurrentTimeAsString;
+import static us.mn.state.health.lims.common.util.DateUtil.getCurrentDateAsText;
 
 public class SamplePatientEntrySaveAction extends BaseAction {
 
@@ -222,15 +223,15 @@ public class SamplePatientEntrySaveAction extends BaseAction {
 		useReferringSiteId = FormFields.getInstance().useField(Field.RequesterSiteList);
 		boolean trackPayments = ConfigurationProperties.getInstance().isPropertyValueEqual(Property.trackPatientPayment, "true");
 		String currentTimeAsString = getCurrentTimeAsString();
+		String currentDateAsString = getCurrentDateAsText();
 		if (useReceiveDateForCollectionDate) {
-			collectionDateFromRecieveDate = receivedDateForDisplay + " " + currentTimeAsString;
+			collectionDateFromRecieveDate = currentDateAsString + " " + currentTimeAsString;
 		}
 
 		String receivedTime = dynaForm.getString("recievedTime");
-		if (isBlankOrNull(receivedTime)) {
-			receivedTime = currentTimeAsString;
+		if (!isBlankOrNull(receivedTime)) {
+			receivedDateForDisplay += " " + receivedTime;
 		}
-		receivedDateForDisplay += " " + receivedTime;
 
 		requesterSite = null;
 		if (useReferringSiteId) {
@@ -550,11 +551,12 @@ public class SamplePatientEntrySaveAction extends BaseAction {
         sample.setEnteredDate(new java.util.Date());
 		Locale locale = SystemConfiguration.getInstance().getDefaultLocale();
 		String datePatternWithTimestamp = ResourceLocator.getInstance().getMessageResources().getMessage(locale, "dateTimeWithMilliSec.format.formatKey");
+		String datePattern = ResourceLocator.getInstance().getMessageResources().getMessage(locale, "date.format.formatKey");
 		if (useReceiveTimestamp) {
-			sample.setReceivedTimestamp(DateUtil.convertStringDateToTimestampWithPattern(receivedDate,datePatternWithTimestamp));
+			sample.setReceivedTimestamp(DateUtil.convertStringDateToTimestamp(receivedDate));
 		} else {
 			sample.setReceivedDateForDisplay(receivedDate);
-            sample.setReceivedTimestamp(DateUtil.convertStringDateToTimestampWithPatternNoLocale(receivedDate, datePatternWithTimestamp));
+            sample.setReceivedTimestamp(DateUtil.convertStringDateToTimestampWithPatternNoLocale(receivedDate, datePattern));
 		}
 		if (useReceiveDateForCollectionDate) {
 			sample.setCollectionDate(DateUtil.convertStringDateToTimestampWithPattern(collectionDateFromRecieveDate,
