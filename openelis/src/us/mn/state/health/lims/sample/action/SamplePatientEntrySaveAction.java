@@ -21,8 +21,10 @@ import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionRedirect;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessages;
+import us.mn.state.health.lims.patient.action.PatientManagementUpdateAction;
 import org.bahmni.feed.openelis.feed.contract.SampleTestOrderCollection;
 import org.bahmni.feed.openelis.feed.service.EventPublishers;
 import org.bahmni.feed.openelis.feed.service.impl.OpenElisUrlPublisher;
@@ -202,6 +204,7 @@ public class SamplePatientEntrySaveAction extends BaseAction {
 			throws Exception {
 
 		String forward = FWD_SUCCESS;
+		Boolean showSuccessMessage=true;
 
         AnalysisBuilder analysisBuilder = new AnalysisBuilder();
         orgAddressExtra = new ArrayList<>();
@@ -213,6 +216,7 @@ public class SamplePatientEntrySaveAction extends BaseAction {
 		ActionMessages errors = new ActionMessages();
 
 		String receivedDateForDisplay = dynaForm.getString("receivedDateForDisplay");
+		String sampleProcessingStatus = dynaForm.getString("sampleProcessingStatus");
 		useReceiveDateForCollectionDate = !FormFields.getInstance().useField(Field.CollectionDate);
 
 		useReferringSiteId = FormFields.getInstance().useField(Field.RequesterSiteList);
@@ -283,8 +287,14 @@ public class SamplePatientEntrySaveAction extends BaseAction {
 		}
 
 		setSuccessFlag(request, forward);
+		return sampleProcessingStatus.equals(IActionConstants.SAMPLE_REDIRECT_ACTION) ?
+				redirectToAddPatient(mapping, forward) : mapping.findForward(forward);
+	}
 
-		return mapping.findForward(forward);
+	private ActionForward redirectToAddPatient(ActionMapping mapping, String forward) {
+		ActionRedirect redirect = new ActionRedirect(mapping.findForward(forward));
+		redirect.addParameter("success", true);
+		return redirect;
 	}
 
 	private List<SampleTestOrderCollection> getTestOrderList(List<SampleTestCollection> sampleTestCollectionList) {

@@ -36,6 +36,7 @@
             <form-property name="requesters" type="java.util.Collection"/>
             <form-property name="requesterSelection" type="java.lang.String" initial=""/>
             <form-property name="newRequesterName" type="java.lang.String" initial=""/>
+            <form-property name="sampleProcessingStatus" type="java.lang.String" initial="Save"/>
             <form-property name="referringSiteCode" type="java.lang.String" initial=""/>
             <form-property name="facilityAddressStreet" type="java.lang.String" initial=""/>
             <form-property name="facilityAddressCommune" type="java.lang.String" initial=""/>

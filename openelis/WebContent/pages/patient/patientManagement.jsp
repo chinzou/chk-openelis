@@ -48,10 +48,12 @@
     boolean supportDynamicAddresses = false;
     boolean supportfirstNameFirst;
     boolean supportPrimaryRelative = false;
+    String showMessage = "false";
     String stNumberFormat = ConfigurationProperties.getInstance().getPropertyValue(ConfigurationProperties.Property.ST_NUMBER_FORMAT);
  %>
 <%
     String path = request.getContextPath();
+    showMessage = request.getParameter("success");
     basePath = path + "/";
 	supportSTNumber = FormFields.getInstance().useField(Field.StNumber);
 	supportAKA = FormFields.getInstance().useField(Field.AKA);
@@ -81,6 +83,7 @@
 	}
 
 	patientNamesRequired = FormFields.getInstance().useField(Field.PatientNameRequired);
+
 %>
 
 
@@ -92,6 +95,7 @@
   tiles with simular names.  Only those elements that may cause confusion are being tagged, and we know which ones will collide
   because we can predicte the future */
 
+var showMessage =<%= showMessage %>;
 var supportSTNumber = <%= supportSTNumber %>;
 var supportAKA = <%= supportAKA %>;
 var supportMothersName = <%= supportMothersName %>;
@@ -147,6 +151,10 @@ var patientInfoChangeListeners = new Array();
 var dirty = false;
 
 $jq(function() {
+
+    if(showMessage === true)
+        showSuccessMessage(true);
+
     $('saveAndRedirectColumn').show();
 });
 

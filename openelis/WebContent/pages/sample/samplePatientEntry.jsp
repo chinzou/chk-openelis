@@ -334,7 +334,6 @@ function checkValidTime(time)
 		setFieldErrorDisplay(time);
 		setSampleFieldInvalid(time.name);
 	}
-5
 	setSave();
 }
 
@@ -530,6 +529,7 @@ function capitalizeValue( text){
 <html:hidden property="domain" name="<%=formName%>" value="<%=genericDomain%>" styleId="domain"/>
 <html:hidden property="removedSampleItem" value="" styleId="removedSampleItem"/>
 <html:hidden property="newRequesterName" name='<%=formName %>' styleId="newRequesterName" />
+<html:hidden property="sampleProcessingStatus" name='<%=formName %>' styleId="sampleProcessingStatus" value="save" />
 <div id=sampleEntryPage <%= (orderTypeList == null || orderTypeList.size() == 0)? "" : "style='display:none'"  %>>
     <jsp:include page="<%=fieldsetToJspMap.get(fieldsetOrder.get(0))%>" />
     <jsp:include page="<%=fieldsetToJspMap.get(fieldsetOrder.get(1))%>" />
@@ -582,6 +582,7 @@ function setTestsWithAccessionNumber() {
 }
 
 function  /*void*/ saveAndRedirectPage(){
+    document.getElementById("sampleProcessingStatus").value = 'SaveAndRedirect';
     var form = savePageHelper();
     if(sampleId != "null"){
         setTestsWithAccessionNumber();

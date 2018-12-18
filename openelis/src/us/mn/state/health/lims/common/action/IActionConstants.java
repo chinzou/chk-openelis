@@ -306,4 +306,6 @@ public interface IActionConstants {
     public static final String MODULE_ACCESS_SAMPLE_ACCESSIONNO_EDIT = "Access.sample.accessionNo.edit";
     
     public static final String ORG_SAMPLE_TYPE_REFERRER = "R";
+
+    public static final String SAMPLE_REDIRECT_ACTION = "SaveAndRedirect";
 }
