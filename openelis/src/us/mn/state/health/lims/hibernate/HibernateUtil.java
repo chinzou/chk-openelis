@@ -15,12 +15,12 @@
 */
 package us.mn.state.health.lims.hibernate;
 
-
 import java.util.Properties;
 import java.io.File;
 import java.io.FileInputStream;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
 import org.hibernate.Session;
@@ -32,7 +32,7 @@ import org.hibernate.connection.ConnectionProvider;
 import org.hibernate.impl.SessionFactoryImpl;
 import us.mn.state.health.lims.common.exception.LIMSRuntimeException;
 import us.mn.state.health.lims.common.log.LogEvent;
-
+import us.mn.state.health.lims.common.util.StringUtil;
 
 /**
  * Basic Hibernate helper class, handles SessionFactory, Session and Transaction.
@@ -51,8 +51,9 @@ public class HibernateUtil {
     private static final ThreadLocal threadSession = new ThreadLocal();
     private static final ThreadLocal threadInterceptor = new ThreadLocal();
     private static String CONFIG_FILE_LOCATION = "/us/mn/state/health/lims/hibernate/hibernate.cfg.xml";
+    private static String CUSTOM_FILE_PROPERTY = System.getProperty("hibernate.properties.file");
     private static Logger logger = Logger.getLogger(HibernateUtil.class);
-    private static String CUSTOM_FILE_PROPERTY = System.getProperty("HIBERNATE_PROPERTIES_FILE");
+
     private static String configFile = CONFIG_FILE_LOCATION;
 
     static {
@@ -65,19 +66,21 @@ public class HibernateUtil {
     static {
         try {
             configuration = new Configuration();
-            //bugzilla 1939 (trim changed data before update/insert)
-//			configuration.setInterceptor(new LIMSTrimDataInterceptor());
             configuration.configure(configFile);
 
-            if ((new File(CUSTOM_FILE_PROPERTY)).exists()){
-                FileInputStream customPropertyStream = new FileInputStream(CUSTOM_FILE_PROPERTY);
-                Properties properties = new Properties();
-                properties.load(customPropertyStream);
-                configuration.addProperties(properties);
-            }
+
+                if (!StringUtil.isNullorNill(CUSTOM_FILE_PROPERTY) && (new File(CUSTOM_FILE_PROPERTY)).exists()) {
+                    FileInputStream customPropertyStream = new FileInputStream(CUSTOM_FILE_PROPERTY);
+                    Properties properties = new Properties();
+                    properties.load(customPropertyStream);
+                    configuration.addProperties(properties);
+                }
+
+            //bugzilla 1939 (trim changed data before update/insert)
+            //configuration.setInterceptor(new LIMSTrimDataInterceptor());
+            sessionFactory = configuration.buildSessionFactory();
             // We could also let Hibernate bind it to JNDI:
 
-            sessionFactory = configuration.buildSessionFactory();
             // configuration.configure().buildSessionFactory()
         } catch (Throwable ex) {
             // We have to catch Throwable, otherwise we will miss
@@ -310,7 +313,6 @@ public class HibernateUtil {
      */
 /*
     public static Session disconnectSession() throws LIMSRuntimeException {
-
         Session session = getSession();
         try {
             threadSession.set(null);
