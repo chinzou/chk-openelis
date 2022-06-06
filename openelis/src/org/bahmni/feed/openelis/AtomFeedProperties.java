@@ -29,7 +29,7 @@ public class AtomFeedProperties {
     private static final String FEED_REPLY_TIMEOUT = "feed.replyTimeoutInMilliseconds";
     private static final String FEED_MAX_FAILED_EVENTS = "feed.maxFailedEvents";
     private static final String FAILED_EVENT_MAX_RETRY = "feed.failedEventMaxRetry";
-    public static final String CUSTOM_PROPERTY_FILENAME = System.getProperty("ATOMFEED_PROPERTIES_FILE");
+    public static final String CUSTOM_PROPERTY_FILENAME = System.getProperty("atomfeed.properties.file");
     public static final String DEFAULT_PROPERTY_FILENAME = "/atomfeed.properties";
 
     private Properties properties;
